@@ -4,6 +4,7 @@ package game.model;
  * 公司主體類別（玩家化身）
  * 包含核心屬性，並實作因經營行為（如拒絕放貸）導致聲望與股價變動的連動機制。
  */
+
 public class Company {
 
     private IndustryType industry;
