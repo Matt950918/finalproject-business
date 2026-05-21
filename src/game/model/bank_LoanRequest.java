@@ -3,8 +3,8 @@ package game.model;
 import java.util.Random;
 
 /**
- * 貸款申請案類別（檔名堅持不變：bank_LoanRequest）
- * 負責處理客戶的分期還款、每期違約機率抽籤，以及被拒絕後的劇本對接。
+ * 貸款申請案類別（檔名：bank_LoanRequest）
+ * 負責處理客戶的分期還款、階梯式違約機率抽籤，以及被拒絕後的劇本對接。
  */
 public class bank_LoanRequest {
 
@@ -31,7 +31,7 @@ public class bank_LoanRequest {
         this.creditScore = Math.max(1, Math.min(100, creditScore));
         this.totalTicks = totalTicks;
         this.remainingTicks = totalTicks;
-        this.rejectCount = 0; // 剛登場時被拒絕次數為 0
+        this.rejectCount = 0;
     }
 
     // ==========================================
@@ -39,24 +39,24 @@ public class bank_LoanRequest {
     // ==========================================
 
     /**
-     * 【精準金融分級】計算這名客戶的「每期違約率」
-     * 信用分數越高越安全；信用分數越低，越容易爆雷
+     * 【精準階梯式平衡】依據信用分數，回傳該客戶每回合的「爆雷機率」
+     * 既能給玩家安全感，又能帶來既期待又怕受傷害的賭博感
      */
     public double getDefaultProbability() {
         if (this.creditScore >= 80) {
-            return 0.005; // 🌟 信用優良 (80~100)：極度安全，違約率 0.5%
+            return 0.005; // 🌟 優質客戶 (80~100)：爆雷率 0.5% (幾乎不爆，給玩家安全感)
         } else if (this.creditScore >= 60) {
-            return 0.02;  // 📈 信用一般 (60~79)：平穩，違約率 2%
+            return 0.02;  // 📈 普通客戶 (60~79)：爆雷率 2.0% (偶爾嚇一跳，增加真實感)
         } else if (this.creditScore >= 40) {
-            return 0.08;  // ⚠️ 信用瑕疵 (40~59)：高風險，違約率 8%
+            return 0.08;  // ⚠️ 投機/瑕疵客戶 (40~59)：爆雷率 8.0% (高風險，考驗玩家心臟)
         } else {
-            return 0.35;  // ❌ 信用極差 (1~39)：次級炸彈，違約率飆高到 35%
+            return 0.35;  // ❌ 極差/炸彈客戶 (1~39)：爆雷率 35.0% (超級次級炸彈，貪心極易破產)
         }
     }
 
     /**
-     * 【隨機未爆彈抽籤】在未來的每一個 Tick 判定這個客人這回合會不會突然跑路
-     * @return true 代表客人違約跑路；false 代表這回合平安
+     * 【每回合未爆彈抽籤】判定這個客人這回合會不會突然因為突發事件跑路
+     * @return true 代表客人突發爆雷跑路；false 代表這回合平安
      */
     public boolean checkEventualDefault() {
         return random.nextDouble() < getDefaultProbability();
@@ -90,7 +90,7 @@ public class bank_LoanRequest {
 
         // 如果只被拒絕過 1 次，他就會變更條件重新回來敲門
         if (this.rejectCount == 1) {
-            // 這裡會去呼叫妳等一下要設計的 bank_Customer 劇本
+            // 呼叫 bank_Customer 的劇本庫生成二度挑戰的對話與數據
             bank_LoanRequest loopRequest = bank_Customer.createRequestByName(this.applicantName, this.rejectCount);
             return loopRequest;
         }
@@ -101,7 +101,7 @@ public class bank_LoanRequest {
     }
 
     // ==========================================
-    // 4. Getter 與 Setter 方法 (供 UI 與 Engine 使用)
+    // 4. Getter 與 Setter 方法
     // ==========================================
     public String getApplicantName() { return applicantName; }
     public double getAmount() { return amount; }
