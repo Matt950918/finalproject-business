@@ -1,29 +1,7 @@
-import game.model.bio.BioCompany;
-import game.model.bio.Drug;
-import game.model.bio.BioTechTree;
-
+ // 如果 Main 放在 game.model 底下，請保留這行；如果放在 src 底下，請刪除這行
 public class Main {
-
     public static void main(String[] args) {
-
-        BioCompany company = new BioCompany("BioTech", 1000000);
-
-        Drug d = new Drug("感冒藥A",
-                Drug.DrugType.COLD,
-                0.35,
-                200000,
-                50);
-
-        company.addDrug(d);
-
-        BioTechTree tech = new BioTechTree(company);
-
-        tech.upgradeRnD();
-
-        company.researchDrug(d);
-
-        company.sellDrug(d, 10000);
-
-        System.out.println(company.getMoney());
+        // 這裡會強制指定去啟動大寫的 MainApp 畫面
+        javafx.application.Application.launch(Mainapp.class, args);
     }
 }
