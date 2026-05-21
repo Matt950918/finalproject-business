@@ -112,4 +112,7 @@ public class bank_LoanRequest {
     public int getRejectCount() { return rejectCount; }
 
     public void setRejectCount(int rejectCount) { this.rejectCount = rejectCount; }
+    public boolean checkDefault() {
+        return random.nextDouble() < getDefaultProbability();
+    }
 }
