@@ -1,0 +1,37 @@
+/* 整個背景：Switch 經典的深灰暗色調 */
+.root {
+    -fx-background-color: #2b2b2b;
+}
+
+/* 遊戲主標題字體設定 */
+.title-label {
+    -fx-text-fill: white;
+    -fx-font-size: 60px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 40 0;
+}
+
+/* 按鈕預設狀態：扁平化深灰、圓角、白色粗體字 */
+.switch-button {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 30; /* 圓角效果 */
+    -fx-border-radius: 30;
+    -fx-padding: 15 40 15 40;
+    -fx-min-width: 250px;
+}
+
+/* 🔥 按鈕 Hover (滑鼠游標停在上面) 狀態：Switch 最經典的霓虹粗邊框！ */
+.switch-button:hover {
+    -fx-background-color: #4b4b4b; /* 背景微微變亮 */
+    -fx-border-color: #00c3e3;     /* Switch 的霓虹藍色邊框 */
+    -fx-border-width: 4px;
+    -fx-cursor: hand;
+}
+
+/* 特別把離開遊戲的按鈕設定成 Switch 紅色 */
+.button-red:hover {
+    -fx-border-color: #e60012;     /* Switch 的霓虹紅色邊框 */
+}
