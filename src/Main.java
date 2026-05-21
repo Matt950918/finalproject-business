@@ -1,16 +1,29 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import game.model.bio.BioCompany;
+import game.model.bio.Drug;
+import game.model.bio.BioTechTree;
+
 public class Main {
+
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
 
+        BioCompany company = new BioCompany("BioTech", 1000000);
 
-            for (int i = 1; i <= 5; i++) {
-                //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-                // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-                System.out.println("i = " + i);
-            }
+        Drug d = new Drug("感冒藥A",
+                Drug.DrugType.COLD,
+                0.35,
+                200000,
+                50);
+
+        company.addDrug(d);
+
+        BioTechTree tech = new BioTechTree(company);
+
+        tech.upgradeRnD();
+
+        company.researchDrug(d);
+
+        company.sellDrug(d, 10000);
+
+        System.out.println(company.getMoney());
     }
 }
