@@ -1,37 +1,57 @@
-/* 整個背景：Switch 經典的深灰暗色調 */
+/* ==========================================
+   背景與透明白色遮罩 (Glassmorphism 效果)
+   ========================================== */
+
+/* 1. 最底層背景：換成 FINCHECK 的淺灰背景色，或者妳可以放背景圖 */
 .root {
-    -fx-background-color: #2b2b2b;
+    -fx-background-color: #F4F6F9;
+    /* 如果有背景圖，可以保留這幾行：
+    -fx-background-image: url("bg.jpg");
+    -fx-background-size: cover;
+    */
 }
 
-/* 遊戲主標題字體設定 */
+/* 2. 透明白色層：如果要疊一層透明白，可以把這個 class 加在 FXML 裡的 VBox 或裝內容的容器上 */
+.glass-panel {
+    /* rgba(紅, 綠, 藍, 透明度) -> 0.7 代表 70% 不透明的白色 */
+    -fx-background-color: rgba(255, 255, 255, 0.7);
+    -fx-background-radius: 20; /* 給它一點圓角更現代 */
+    -fx-padding: 40;
+}
+
+/* ==========================================
+   文字與標題
+   ========================================== */
+
+/* 遊戲主標題字體設定：配合淺色背景，文字改成深色 */
 .title-label {
-    -fx-text-fill: white;
+    -fx-text-fill: #5A5C69;
     -fx-font-size: 60px;
     -fx-font-weight: bold;
     -fx-padding: 0 0 40 0;
 }
 
-/* 按鈕預設狀態：扁平化深灰、圓角、白色粗體字 */
+/* ==========================================
+   按鈕 (結合 FINCHECK 的乾淨風格)
+   ========================================== */
+
+/* 按鈕預設狀態：白底、深灰字、淡淡的陰影 */
 .switch-button {
-    -fx-background-color: #3c3c3c;
-    -fx-text-fill: white;
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #5A5C69;
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-background-radius: 30; /* 圓角效果 */
+    -fx-background-radius: 30;
     -fx-border-radius: 30;
     -fx-padding: 15 40 15 40;
     -fx-min-width: 250px;
+    /* 加上一點柔和的陰影讓按鈕浮出來 */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
 }
 
-/* 🔥 按鈕 Hover (滑鼠游標停在上面) 狀態：Switch 最經典的霓虹粗邊框！ */
 .switch-button:hover {
-    -fx-background-color: #4b4b4b; /* 背景微微變亮 */
-    -fx-border-color: #00c3e3;     /* Switch 的霓虹藍色邊框 */
-    -fx-border-width: 4px;
+    -fx-background-color: #F8F9FC;
+    -fx-border-color: #c8b6eb;
+    -fx-border-width: 3px;
     -fx-cursor: hand;
-}
-
-/* 特別把離開遊戲的按鈕設定成 Switch 紅色 */
-.button-red:hover {
-    -fx-border-color: #e60012;     /* Switch 的霓虹紅色邊框 */
 }

@@ -76,6 +76,7 @@ public class MainMenuController {
             System.err.println("⚠️ 音樂播放器啟動失敗（請確認 VM Options 的 javafx.media 是否生效）：" + e.getMessage());
             e.printStackTrace(); // 把最深層的報錯堆疊印出來
         }
+
     }
 
     // ==========================================
@@ -112,7 +113,10 @@ public class MainMenuController {
         if (PlayerAccount.login(user, pass)) {
             currentUser = user;
             lblWelcome.setText("目前登入：" + currentUser);
-            lblWelcome.setStyle("-fx-text-fill: #00c3e3;");
+
+            // 🌟 在這裡加上 -fx-font-size 把字放大，再加粗體讓它更清楚！
+            lblWelcome.setStyle("-fx-text-fill: #232946; -fx-font-size: 22px; -fx-font-weight: bold;");
+
             hideLoginLayer(null);
         } else {
             lblLoginMessage.setText("❌ 帳號或密碼錯誤！");
