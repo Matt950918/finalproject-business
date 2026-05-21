@@ -1,12 +1,14 @@
 package game.model;
 
+import game.model.bank.bank_Customer;
+
 import java.util.Random;
 
 /**
  * 貸款申請案類別（檔名堅持不變：bank_LoanRequest）
  * 負責處理客戶的分期還款、每期違約機率抽籤，以及被拒絕後的劇本對接。
  */
-public class bank_LoanRequest {
+public class Company {
 
     // ==========================================
     // 1. 屬性 (Attributes)
@@ -24,7 +26,7 @@ public class bank_LoanRequest {
     // ==========================================
     // 2. 建構子 (Constructor)
     // ==========================================
-    public bank_LoanRequest(String applicantName, double amount, double interestRate, int creditScore, int totalTicks) {
+    public Company(String applicantName, double amount, double interestRate, int creditScore, int totalTicks) {
         this.applicantName = applicantName;
         this.amount = amount;
         this.interestRate = interestRate;
@@ -85,13 +87,13 @@ public class bank_LoanRequest {
      * 當玩家在介面按「拒絕」時觸發的邏輯
      * @return 重新包裝過後的全新貸款申請案 (也就是打折、換條件後捲土重來的他)
      */
-    public bank_LoanRequest processRejection() {
+    public game.model.bank.bank_LoanRequest processRejection() {
         this.rejectCount++;
 
         // 如果只被拒絕過 1 次，他就會變更條件重新回來敲門
         if (this.rejectCount == 1) {
             // 這裡會去呼叫妳等一下要設計的 bank_Customer 劇本
-            bank_LoanRequest loopRequest = bank_Customer.createRequestByName(this.applicantName, this.rejectCount);
+            game.model.bank.bank_LoanRequest loopRequest = bank_Customer.createRequestByName(this.applicantName, this.rejectCount);
             return loopRequest;
         }
 
