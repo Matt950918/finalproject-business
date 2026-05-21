@@ -1,62 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
 
-<StackPane stylesheets="@global_theme.css"
-           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="game.controller.MainMenuController">
-
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="game.controller.MainMenuController"
+           stylesheets="@global_theme.css"
+           style="-fx-background-image: url('@../../resources/image/background.jpg');
+                  -fx-background-size: cover;
+                  -fx-background-repeat: no-repeat;
+                  -fx-background-position: center center;">
     <VBox fx:id="mainMenuLayer" alignment="CENTER" spacing="25.0">
+
         <Label text="遊戲名字" styleClass="title-label" />
 
         <VBox alignment="CENTER" spacing="20.0">
-            <Label fx:id="lblWelcome" text="尚未登入" style="-fx-text-fill: #00c3e3; -fx-font-size: 18px;" />
 
-            <Button text="開始遊戲 START" styleClass="switch-button" onAction="#handleStartGame" />
-            <Button text="帳號登入 LOGIN" styleClass="switch-button" onAction="#showLoginLayer" />
-            <Button text="遊戲說明 HOW TO PLAY" styleClass="switch-button" onAction="#showInstructions" />
-            <Button text="離開遊戲 EXIT" styleClass="switch-button, button-red" onAction="#handleExit" />
+            <Label fx:id="lblWelcome"
+                   text="尚未登入"
+                   style="-fx-text-fill: #00c3e3; -fx-font-size: 18px;" />
+
+            <Button text="開始遊戲 START"
+                    styleClass="switch-button"
+                    onAction="#handleStartGame" />
+
+            <Button text="帳號登入 LOGIN"
+                    styleClass="switch-button"
+                    onAction="#showLoginLayer" />
+
+            <Button text="遊戲說明 HOW TO PLAY"
+                    styleClass="switch-button"
+                    onAction="#showInstructions" />
+
+            <Button text="離開遊戲 EXIT"
+                    styleClass="switch-button button-red"
+                    onAction="#handleExit" />
         </VBox>
     </VBox>
 
-    <VBox fx:id="loginLayer" alignment="CENTER" spacing="20.0" visible="false"
-          style="-fx-background-color: rgba(0, 0, 0, 0.9);">
+    <VBox fx:id="loginLayer"
+          alignment="CENTER"
+          spacing="20.0"
+          visible="false"
+          style="-fx-background-color: rgba(0, 0, 0, 0.6);">
 
-        <Label text="玩家登入 / 註冊" style="-fx-text-fill: white; -fx-font-size: 36px; -fx-font-weight: bold;" />
+        <Label text="玩家登入 / 註冊"
+               style="-fx-text-fill: white; -fx-font-size: 36px; -fx-font-weight: bold;" />
 
-        <Label fx:id="lblLoginMessage" text="" style="-fx-text-fill: #e60012; -fx-font-size: 16px;" />
+        <Label fx:id="lblLoginMessage"
+               text=""
+               style="-fx-text-fill: #e60012; -fx-font-size: 16px;" />
 
         <VBox spacing="15" maxWidth="300">
-            <TextField fx:id="txtUsername" promptText="請輸入帳號" style="-fx-font-size: 18px; -fx-padding: 10;" />
-            <PasswordField fx:id="txtPassword" promptText="請輸入密碼" style="-fx-font-size: 18px; -fx-padding: 10;" />
+
+            <TextField fx:id="txtUsername"
+                       promptText="請輸入帳號"
+                       style="-fx-font-size: 18px; -fx-padding: 10;" />
+
+            <PasswordField fx:id="txtPassword"
+                           promptText="請輸入密碼"
+                           style="-fx-font-size: 18px; -fx-padding: 10;" />
         </VBox>
 
         <HBox spacing="20" alignment="CENTER">
-            <Button text="登入" styleClass="switch-button" onAction="#handleLogin" prefWidth="120" />
-            <Button text="註冊新帳號" styleClass="switch-button" onAction="#handleRegister" prefWidth="120" />
+
+            <Button text="登入"
+                    styleClass="switch-button"
+                    onAction="#handleLogin"
+                    prefWidth="120" />
+
+            <Button text="註冊新帳號"
+                    styleClass="switch-button"
+                    onAction="#handleRegister"
+                    prefWidth="120" />
         </HBox>
 
-        <Button text="返回 BACK" styleClass="switch-button, button-red" onAction="#hideLoginLayer" style="-fx-margin-top: 20;" />
+        <Button text="返回 BACK"
+                styleClass="switch-button button-red"
+                onAction="#hideLoginLayer" />
     </VBox>
 
-    <VBox fx:id="instructionLayer" alignment="CENTER" spacing="20.0" visible="false"
-          style="-fx-background-color: rgba(0, 0, 0, 0.85); -fx-padding: 50;">
-        <Label text="遊戲說明" style="-fx-text-fill: white; -fx-font-size: 40px; -fx-font-weight: bold;" />
-        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-padding: 20;" prefWidth="600" prefHeight="400">
-            <VBox spacing="10" style="-fx-background-color: #3c3c3c; -fx-padding: 20; -fx-background-radius: 15;">
-                <Text fill="white" style="-fx-font-size: 18px;"
+    <VBox fx:id="instructionLayer"
+          alignment="CENTER"
+          spacing="20.0"
+          visible="false"
+          style="-fx-background-color: rgba(0, 0, 0, 0.55); -fx-padding: 50;">
+
+        <Label text="遊戲說明"
+               style="-fx-text-fill: white; -fx-font-size: 40px; -fx-font-weight: bold;" />
+
+        <ScrollPane fitToWidth="true"
+                    prefWidth="600"
+                    prefHeight="400"
+                    style="-fx-background-color: transparent;">
+
+            <VBox spacing="10"
+                  style="-fx-background-color: #3c3c3c; -fx-padding: 20; -fx-background-radius: 15;">
+
+                <Text fill="white"
+                      style="-fx-font-size: 18px;"
                       text="【銀行業】核准貸款賺利息，小心客戶跑路！&#10;【科技業】研發技術，對抗競爭對手！&#10;【生技業】尋找資金，挑戰解盲機率！" />
             </VBox>
         </ScrollPane>
-        <Button text="關閉 CLOSE" styleClass="switch-button, button-red" onAction="#hideInstructions" />
+
+        <Button text="關閉 CLOSE"
+                styleClass="switch-button button-red"
+                onAction="#hideInstructions" />
     </VBox>
 
 </StackPane>
