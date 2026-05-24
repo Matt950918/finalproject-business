@@ -2,6 +2,7 @@ package game.model.bank;
 
 import java.util.Random;
 
+
 /**
  * 貸款申請案類別（檔名：bank_LoanRequest）
  * 負責處理客戶的分期還款、階梯式違約機率抽籤，以及被拒絕後的劇本對接。
@@ -11,13 +12,15 @@ public class bank_LoanRequest {
     // ==========================================
     // 1. 屬性 (Attributes)
     // ==========================================
+    private String dialogue; // 📜 新增儲存客人台詞的欄位
     private String applicantName;   // 申請人姓名
     private double amount;          // 申請貸款金額
     private double interestRate;    // 房貸年利率 (例如：0.025 代表 2.5%)
     private int creditScore;        // 信用分數 (1 ~ 100)
     private int totalTicks;         // 總還款期數 (分多少個 Tick 還清)
     private int remainingTicks;     // 剩餘還款期數
-    private int rejectCount;        // 紀錄被拒絕了幾次 (捲土重來機制的關鍵)
+    private int rejectCount;
+    private int ticksRemaining;// 紀錄被拒絕了幾次 (捲土重來機制的關鍵)
 
     private static final Random random = new Random();
 
@@ -31,6 +34,7 @@ public class bank_LoanRequest {
         this.creditScore = Math.max(1, Math.min(100, creditScore));
         this.totalTicks = totalTicks;
         this.remainingTicks = totalTicks;
+        this.ticksRemaining = totalTicks;
         this.rejectCount = 0;
     }
 
@@ -66,19 +70,22 @@ public class bank_LoanRequest {
      * 每回合還款邏輯（精準年利率轉月領息模型）
      * @return 銀行這回合可以收到的還款金額（本金 + 利息）
      */
+    // ==========================================
+    // 💰 修正後的每期還款計算邏輯
+    // ==========================================
     public double processTickPayment() {
-        if (remainingTicks > 0) {
-            remainingTicks--;
+        if (ticksRemaining <= 0) return 0;
 
-            // 每期應還本金 = 總金額 / 總期數
-            double principalPerTick = amount / totalTicks;
+        // 期數倒數
+        ticksRemaining--;
 
-            // 每期利息 = 剩餘本金 * (年利率 / 12) -> 完美符合每月領息與年利率邏輯
-            double interestPerTick = (principalPerTick * (remainingTicks + 1)) * (interestRate / 12.0);
+        // 財務邏輯修正：將年利率依據期數 (假設 1 tick = 1 個月) 分攤
+        // 總利息 = 本金 * 年利率 * (總期數 / 12.0)
+        double totalInterest = amount * interestRate * (totalTicks / 12.0);
+        double totalPayment = amount + totalInterest;
 
-            return principalPerTick + interestPerTick;
-        }
-        return 0;
+        // 每期應還金額 = 總還款額 / 總期數
+        return totalPayment / totalTicks;
     }
 
     /**
@@ -99,6 +106,8 @@ public class bank_LoanRequest {
         System.out.println("❌ " + this.applicantName + " 碎碎念：「這家銀行真難借，我去別家！」");
         return null;
     }
+    public String getDialogue() { return dialogue; }
+    public void setDialogue(String dialogue) { this.dialogue = dialogue; }
 
     // ==========================================
     // 4. Getter 與 Setter 方法
@@ -110,6 +119,9 @@ public class bank_LoanRequest {
     public int getRemainingTicks() { return remainingTicks; }
     public int getTotalTicks() { return totalTicks; }
     public int getRejectCount() { return rejectCount; }
+    public int getTicksRemaining() {
+        return ticksRemaining;
+    }
 
     public void setRejectCount(int rejectCount) { this.rejectCount = rejectCount; }
     public boolean checkDefault() {
