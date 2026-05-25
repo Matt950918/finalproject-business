@@ -19,30 +19,41 @@ import java.util.List;
 
 public class MainGameController {
 
-    @FXML private Label lblDay;
-    @FXML private Label lblTimer;
-    @FXML private Label lblStockPrice;
-    @FXML private Button btnCash;
+    @FXML
+    private Label lblDay;
+    @FXML
+    private Label lblTimer;
+    @FXML
+    private Label lblStockPrice;
+    @FXML
+    private Button btnCash;
 
     // 彈窗相關元件
-    @FXML private VBox resultOverlay;
-    @FXML private Label lblSettleReason;
-    @FXML private Label lblPriceChange;
-    @FXML private Label lblResultHeader;
-    @FXML private VBox mainGameLayer;
+    @FXML
+    private VBox resultOverlay;
+    @FXML
+    private Label lblSettleReason;
+    @FXML
+    private Label lblPriceChange;
+    @FXML
+    private Label lblResultHeader;
+    @FXML
+    private VBox mainGameLayer;
 
-    @FXML private VBox newsOverlay;
-    @FXML private Label lblNewsTitle;
-    @FXML private VBox optionsBox;
-    @FXML private StackPane industryContentArea;
+    @FXML
+    private VBox newsOverlay;
+    @FXML
+    private Label lblNewsTitle;
+    @FXML
+    private VBox optionsBox;
+    @FXML
+    private StackPane industryContentArea;
 
-    // 底層系統
+    // 底層系統 (一啟動時會建立預設物件)
     private bank_system bankSystem = new bank_system();
-    private game.model.bio.BioSystem bioSystem = new game.model.bio.BioSystem();
-    private game.model.tech.TechSystem techSystem = new game.model.tech.TechSystem();
 
     private Company playerCompany;
-    private int currentDay = 0;
+    private int currentDay = 1; // 修正：初始為第 1 天
     private Timeline timeline;
     private int timeLeft = 60;
 
@@ -53,7 +64,6 @@ public class MainGameController {
         return playerCompany;
     }
 
-    // 🌟 補上這個！讓 BankPanel 可以取得今天是第幾天
     public int getCurrentDay() {
         return currentDay;
     }
@@ -68,30 +78,46 @@ public class MainGameController {
     // 🚀 遊戲生命週期
     // ==========================================
     public void startGame(IndustryType selectedIndustry) {
-        playerCompany = new Company(selectedIndustry);
+        PlayerData player = PlayerAccount.getPlayerData(MainMenuController.currentUser);
 
-        playerCompany.spendCash(playerCompany.getCash());
-        playerCompany.earnCash(50_000_000);
-        playerCompany.recordTransaction("🏢 [系統] 遠東集團創立，獲得初始資金：$5000 萬");
+        if (player.getCompany() == null) {
+            // 🆕 新遊戲建立
+            playerCompany = new Company(selectedIndustry);
+            playerCompany.spendCash(playerCompany.getCash()); // 清空預設，統一給 5000 萬
+            playerCompany.earnCash(50_000_000);
+            playerCompany.recordTransaction("🏢 [系統] 遠東集團創立，獲得初始資金：$5000 萬");
 
-        if (selectedIndustry == IndustryType.BANK) {
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(bankSystem.getMoney());
-        } else if (selectedIndustry == IndustryType.BIOTECH) {
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(bioSystem.getMoney());
-        } else if (selectedIndustry == IndustryType.TECH) {
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(techSystem.getMoney());
+            this.currentDay = 1;
+            player.setCompany(playerCompany);
+            player.setDay(this.currentDay);
+            PlayerAccount.saveData();
+
+            System.out.println("🆕 新遊戲建立成功");
+
+            // 新遊戲需要主動執行第一天
+            setupTimer();
+            startNewDay();
+        } else {
+            // 📂 載入舊遊戲
+            this.playerCompany = player.getCompany();
+            this.currentDay = player.getDay(); // 讀取上次存檔的天數
+
+            System.out.println("📂 載入舊遊戲成功！目前天數：" + currentDay + "，資產：$" + formatMoney(playerCompany.getCash()));
+
+            // 🌟 核心同步：把舊公司存下來的錢，強行灌進當前的 bankSystem
+            if (playerCompany.getIndustry() == IndustryType.BANK) {
+                if (bankSystem != null) {
+                    bankSystem.setMoney(playerCompany.getCash());
+                }
+                loadBankPanel();
+            }
+
+            // 🌟 修正：讀檔時直接讓時鐘開始跑，不要重複呼叫 startNewDay() 避免多跳一天
+            setupTimer();
+            timeLeft = 60;
+            timeline.play();
         }
-
-        NewsDatabase.resetDatabase();
-
-        if (newsOverlay != null) newsOverlay.setVisible(false);
-        if (resultOverlay != null) resultOverlay.setVisible(false);
-
-        setupTimer();
-        startNewDay();
+        updateStatusLabels();
     }
 
     private void setupTimer() {
@@ -104,44 +130,25 @@ public class MainGameController {
     }
 
     private void startNewDay() {
-        currentDay++;
-
         // 1. 執行產業結算與記帳
         if (playerCompany.getIndustry() == IndustryType.BANK) {
             double beforeMoney = bankSystem.getMoney();
             List<String> bankReports = bankSystem.tick();
             double income = bankSystem.getMoney() - beforeMoney;
 
-            // 📝 記下每天收到的利息
             if (income > 0) {
                 playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 💰 收到放款本息：+$" + formatMoney(income));
             }
 
+            // 同步子系統與公司的金額
             playerCompany.spendCash(playerCompany.getCash());
             playerCompany.earnCash(bankSystem.getMoney());
             loadBankPanel();
 
-            // 🏦 如果有結清或違約，跳出匯報彈窗
             if (!bankReports.isEmpty()) {
                 showBankReportPopup(bankReports);
             }
-
-        } else if (playerCompany.getIndustry() == IndustryType.BIOTECH) {
-            bioSystem.tick();
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(bioSystem.getMoney());
-            loadBioPanel();
-        } else if (playerCompany.getIndustry() == IndustryType.TECH) {
-            techSystem.tick();
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(techSystem.getMoney());
-            loadTechPanel();
         }
-
-        updateStatusLabels();
-
-        timeLeft = 60;
-        timeline.play();
 
         // 2. 新聞彈窗
         if (newsOverlay != null) newsOverlay.setVisible(false);
@@ -152,17 +159,29 @@ public class MainGameController {
             }
         }
 
-        // 3. 🌟 每 30 天結算產出月報
+        // 3. 每 30 天結算產出月報
         if (currentDay > 0 && currentDay % 30 == 0) {
             int month = currentDay / 30;
             playerCompany.summarizeLedger(month);
             playerCompany.recordTransaction("🏦 [月結] 第 " + month + " 個月結算保留盈餘：$" + formatMoney(playerCompany.getCash()));
         }
+
+        // 🌟 4. 換日結束，天數前進，並在這一刻強制執行「本地存檔」
+        this.currentDay++;
+        updateStatusLabels();
+
+        PlayerData player = PlayerAccount.getPlayerData(MainMenuController.currentUser);
+        if (player != null) {
+            player.setCompany(this.playerCompany);
+            player.setDay(this.currentDay);
+            PlayerAccount.saveData(); // 儲存至本地 user_data.dat
+            System.out.println("💾 [自動存檔] 第 " + (currentDay - 1) + " 天結束，最新進度已存入硬碟。");
+        }
+
+        timeLeft = 60;
+        timeline.play();
     }
 
-    // ==========================================
-    // 🏦 銀行專屬：每日帳務匯報彈窗
-    // ==========================================
     private void showBankReportPopup(List<String> reports) {
         StringBuilder sb = new StringBuilder();
         for (String r : reports) {
@@ -176,9 +195,6 @@ public class MainGameController {
         alert.showAndWait();
     }
 
-    // ==========================================
-    // 📰 突發新聞彈窗處理
-    // ==========================================
     private void showNewsPopup(DailyNews news) {
         optionsBox.getChildren().clear();
         lblNewsTitle.setText(news.getTitle());
@@ -204,15 +220,17 @@ public class MainGameController {
         timeline.play();
     }
 
-    // ==========================================
-    // 🖱️ 決策與結算處理
-    // ==========================================
     private void handleOptionSelected(NewsOption selectedOption) {
         timeline.stop();
         double oldPrice = playerCompany.getStockPrice();
         MarketEvent resultEvent = (selectedOption != null) ? selectedOption.execute(playerCompany) : null;
         playerCompany.updateStockPrice(currentDay, resultEvent);
         double newPrice = playerCompany.getStockPrice();
+
+        // 🌟 修正：因為選完新聞可能會影響公司資金 (例如罰款、賺錢)，選完立刻更新同步
+        if (playerCompany.getIndustry() == IndustryType.BANK) {
+            bankSystem.setMoney(playerCompany.getCash());
+        }
 
         String msg = (selectedOption == null)
                 ? "今日營業時間結束，市場結算完畢。"
@@ -256,9 +274,6 @@ public class MainGameController {
         handleOptionSelected(null);
     }
 
-    // ==========================================
-    // 💰 數字格式化與 UI 載入工具
-    // ==========================================
     public String formatMoney(double amount) {
         boolean isNegative = amount < 0;
         double absAmount = Math.abs(amount);
@@ -277,8 +292,6 @@ public class MainGameController {
     private void loadBankPanel() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/BankPanel.fxml"));
-            // 如果你的 FXML 是放在 resources/layout 下，請把上面那行改成：
-            // FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/layout/BankPanel.fxml"));
             VBox bankPanel = loader.load();
 
             BankPanelController bankController = loader.getController();
@@ -299,9 +312,6 @@ public class MainGameController {
         }
     }
 
-    // ==========================================
-    // 📖 顯示資金明細帳本
-    // ==========================================
     @FXML
     private void showLedger() {
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
@@ -311,11 +321,9 @@ public class MainGameController {
         javafx.scene.control.ListView<String> listView = new javafx.scene.control.ListView<>();
         List<String> records = playerCompany.getLedger();
 
-        // 🛡️ 雙重防呆：如果 records 根本不存在 (null)，或者裡面沒東西 (isEmpty)
         if (records == null || records.isEmpty()) {
             listView.getItems().add("目前尚無資金異動紀錄。");
         } else {
-            // 將最新的紀錄顯示在最上面
             for (int i = records.size() - 1; i >= 0; i--) {
                 listView.getItems().add(records.get(i));
             }
@@ -326,46 +334,7 @@ public class MainGameController {
         alert.showAndWait();
     }
 
-    // ==========================================
-    // 🧬 載入生技專屬全螢幕儀表板
-    // ==========================================
-    private void loadBioPanel() {
-        try {
-            // 💡 已經幫你把路徑對齊到 /game/view/BioPanel.fxml
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/BioPanel.fxml"));
-            VBox bioPanel = loader.load();
-
-            // 取得控制器並注入底層數據
-            BioPanelController bioController = loader.getController();
-            bioController.initData(bioSystem, this);
-
-            // 清空主畫面中央區塊，並把生技大廳擺上去
-            industryContentArea.getChildren().clear();
-            industryContentArea.getChildren().add(bioPanel);
-
-        } catch (Exception e) {
-            System.err.println("❌ 載入 BioPanel.fxml 失敗！請檢查路徑與 Controller 設定。");
-            e.printStackTrace();
-        }
-    }
-
-    // ==========================================
-    // 💻 載入科技專屬全螢幕儀表板
-    // ==========================================
-    private void loadTechPanel() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/TechPanel.fxml"));
-            VBox techPanel = loader.load();
-
-            TechPanelController techController = loader.getController();
-            techController.initData(techSystem, this);
-
-            industryContentArea.getChildren().clear();
-            industryContentArea.getChildren().add(techPanel);
-
-        } catch (Exception e) {
-            System.err.println("❌ 載入 TechPanel.fxml 失敗！");
-            e.printStackTrace();
-        }
-    }
+    // 生技與科技大廳因為你尚未實作，先移除多餘呼叫以防編譯錯誤
+    private void loadBioPanel() { System.out.println("🧬 生技系統尚未實作"); }
+    private void loadTechPanel() { System.out.println("💻 科技系統尚未實作"); }
 }

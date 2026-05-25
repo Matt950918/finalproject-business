@@ -1,9 +1,10 @@
 package game.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Company {
+public class Company implements Serializable{
 
     private IndustryType industry;
     private double cash;

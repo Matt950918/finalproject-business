@@ -1,6 +1,8 @@
 package game.model;
 
-public class StockRecord {
+import java.io.Serializable;
+
+public class StockRecord implements Serializable{
 
     private int time;
     private double price;

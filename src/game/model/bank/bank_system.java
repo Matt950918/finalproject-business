@@ -1,9 +1,11 @@
 package game.model.bank;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class bank_system {
+
+public class bank_system implements Serializable {
 
     // 💰 初始資金 5000 萬
     private double money = 50_000_000;
@@ -17,6 +19,11 @@ public class bank_system {
             return true;
         }
         return false;
+    }
+
+    // 🌟 補上這個 Setter 方法，讓讀檔時可以強行把舊檔的錢同步進來
+    public void setMoney(double money) {
+        this.money = money;
     }
 
     public void addLoan(bank_LoanRequest request) {
