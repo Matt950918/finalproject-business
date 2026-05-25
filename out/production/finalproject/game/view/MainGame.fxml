@@ -17,10 +17,10 @@
             <Label fx:id="lblTimer" text="剩餘時間：60 秒" style="-fx-font-size: 18px; -fx-text-fill: #E74A3B;" />
             <Button fx:id="btnCash" text="資金：$0" onAction="#showLedger"
                     style="-fx-background-color: transparent; -fx-text-fill: #2E59D9; -fx-font-size: 18px; -fx-cursor: hand; -fx-padding: 0;" />
-            <Label fx:id="lblStockPrice" text="股價：$0.00" style="-fx-font-size: 18px; -fx-text-fill: #1CC88A;" />
+            <Button fx:id="btnStockPrice" text="股價：$0.00" onAction="#showStockChart" style="-fx-background-color: transparent; -fx-text-fill: #1CC88A; -fx-font-size: 18px; -fx-cursor: hand; -fx-padding: 0;" />
 
-            <Region HBox.hgrow="ALWAYS" /> <Button text="結束本日營業 ➔" onAction="#closeResultAndProceed"
-                                                   style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand; -fx-padding: 8 18;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="結束本日營業 ➔" onAction="#handleEndDay" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand; -fx-padding: 8 18;" />
         </HBox>
 
         <StackPane fx:id="industryContentArea" VBox.vgrow="ALWAYS" />
