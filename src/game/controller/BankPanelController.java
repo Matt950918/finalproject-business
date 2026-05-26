@@ -107,20 +107,30 @@ public class BankPanelController {
     }
 
     private void handleApprove(bank_LoanRequest req, VBox card) {
+        // 1. 安全檢查：改用主畫面的 formatMoney 來顯示更漂亮的金額
         if (mainController.getPlayerCompany().getCash() < req.getAmount()) {
             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
             alert.setTitle("庫存現金不足");
             alert.setHeaderText(null);
-            alert.setContentText("公司目前可用資金不足，無法核准此筆 $" + (req.getAmount()/10000.0) + " 萬的放貸申請！");
+            alert.setContentText("公司目前可用資金不足，無法核准此筆 $" + mainController.formatMoney(req.getAmount()) + " 的放貸申請！");
             alert.showAndWait();
             return;
         }
 
+        // 2. 【核心修正】實時雙重扣款：公司扣錢，同時銀行子系統金庫也要同步扣錢！
         mainController.getPlayerCompany().spendCash(req.getAmount());
-        bankSystem.addLoan(req);
-        mainController.updateStatusLabels();
-        mainController.getPlayerCompany().recordTransaction("[第" + mainController.getCurrentDay() + "天] 核准貸款 - 放款給 " + req.getApplicantName() + "：-$" + (req.getAmount()/10000.0) + " 萬");
+        bankSystem.setMoney(mainController.getPlayerCompany().getCash()); // 💡 讓銀行子系統同步扣除 569 萬與 710 萬！
 
+        // 3. 將貸款加入銀行運作計息名單
+        bankSystem.addLoan(req);
+
+        // 4. 精準記帳：將這筆明確的扣款記錄在流水帳中
+        mainController.getPlayerCompany().recordTransaction("↳ 🏦 [放貸核准] 核發貸款給 " + req.getApplicantName() + "：-$" + mainController.formatMoney(req.getAmount()));
+
+        // 5. 強制重刷主畫面頂部按鈕狀態（此時畫面的資金會立刻「啪」的一聲現扣）
+        mainController.updateStatusLabels();
+
+        // 6. 移除卡片與更新剩餘件數
         loanListContainer.getChildren().remove(card);
         updateLoanCountLabel();
     }

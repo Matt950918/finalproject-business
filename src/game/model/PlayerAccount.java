@@ -2,117 +2,69 @@ package game.model;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
-public class PlayerAccount {
-    // 存檔檔案名稱
-    private static final String SAVE_FILE = "user_data.dat";
+public class PlayerAccount implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private static final String DATA_FILE = "user_data.dat";
 
-    // 模擬資料庫：用來儲存所有玩家的帳號(Key)與密碼(Value)
-    private static HashMap<String, PlayerData> userDatabase = new HashMap<>();
+    // 💡 核心修改：將儲存結構改為儲存一個包含密碼與公司名的封裝物件或直接用 Map 巢狀儲存
+    // 這裡示範最快、最不破壞妳們原本架構的做法：用另一個 Map 存 帳號 -> 公司名
+    private static Map<String, String> userPasswords = new HashMap<>();
+    private static Map<String, String> userCompanies = new HashMap<>(); // 💡 新增：綁定帳號與公司名
 
-    // 模擬資料庫：用來儲存每個玩家的歷史結算紀錄
-
-    // 🌟 靜態初始化區塊：當程式一啟動，自動讀取以前的存檔
     static {
         loadData();
     }
 
-    // ==========================================
-    // 帳號註冊與登入邏輯
-    // ==========================================
+    // 💡 修改登入方法：登入成功時，回傳該帳號綁定的公司名稱（若無則回傳預設值）
+    public static String loginAndGetCompany(String username, String password) {
+        if (userPasswords.containsKey(username) && userPasswords.get(username).equals(password)) {
+            // 抓取綁定的公司名稱，如果舊帳號沒有，就給預設值 "遠東集團"
+            return userCompanies.getOrDefault(username, "遠東集團");
+        }
+        return null; // 登入失敗
+    }
 
-    // 註冊新帳號
-    public static boolean register(String username, String password) {
-
-        if (userDatabase.containsKey(username)) {
+    // 💡 修改註冊方法：讓玩家在註冊時就把公司名稱綁定進去
+    public static boolean register(String username, String password, String companyName) {
+        if (userPasswords.containsKey(username) || username.trim().isEmpty() || password.trim().isEmpty()) {
             return false;
         }
+        userPasswords.put(username, password);
 
-        PlayerData newPlayer = new PlayerData(username, password);
-
-        userDatabase.put(username, newPlayer);
+        // 如果註冊時沒填公司名，就給預設值
+        String finalCompName = (companyName == null || companyName.trim().isEmpty()) ? "遠東集團" : companyName.trim();
+        userCompanies.put(username, finalCompName);
 
         saveData();
-
         return true;
     }
 
-    // 登入驗證
-    public static boolean login(String username, String password) {
-
-        if (userDatabase.containsKey(username)) {
-
-            PlayerData player = userDatabase.get(username);
-
-            if (player.getPassword().equals(password)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-    // ==========================================
-    // 歷史紀錄邏輯 (供未來遊戲結算時呼叫)
-    // ==========================================
-    public static void addMatchRecord(String username, String record) {
-
-        if (userDatabase.containsKey(username)) {
-
-            PlayerData player = userDatabase.get(username);
-
-            player.addHistory(record);
-
-            saveData();
-        }
-    }
-
-    // ==========================================
-    // 🌟 核心功能：存檔與讀檔邏輯
-    // ==========================================
-
-    // 儲存資料到檔案
-    // 儲存資料到檔案 (修改 PlayerAccount.java)
+    // 💾 以下為資料讀寫讀取（確保 userCompanies 也有被一起序列化存檔）
     @SuppressWarnings("unchecked")
-    public static void saveData() {
-        try (ObjectOutputStream oos =
-                     new ObjectOutputStream(new FileOutputStream(SAVE_FILE))) {
-
-            oos.reset(); // 🌟 關鍵：強制清空序列化快取，避免 Java 偷懶拿舊資料來存！
-
-            // 直接存整個玩家資料庫
-            oos.writeObject(userDatabase);
-
-            System.out.println("💾 遊戲資料已自動保存至本地！");
-
-        } catch (IOException e) {
-            System.err.println("❌ 存檔失敗：" + e.getMessage());
-            e.printStackTrace(); // 建議加上這行，可以看到更詳細的背後錯誤
-        }
-    }
-
-    // 從檔案讀取資料
-    @SuppressWarnings("unchecked")
-    public static void loadData() {
-        File file = new File(SAVE_FILE);
-        // 如果檔案不存在，代表是第一次開遊戲，直接跳過讀取
-        if (!file.exists()) {
-            System.out.println("ℹ️ 未偵測到舊存檔，將建立全新資料庫。");
-            return;
-        }
-
+    private static void loadData() {
+        File file = new File(DATA_FILE);
+        if (!file.exists()) return;
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-
-            userDatabase = (HashMap<String, PlayerData>) ois.readObject();
-
-            System.out.println("📂 成功載入以前的玩家資料！目前總註冊人數：" + userDatabase.size());
-        } catch (IOException | ClassNotFoundException e) {
-            System.err.println("❌ 讀取存檔失敗（可能檔案損壞），將初始化新資料：" + e.getMessage());
-            userDatabase = new HashMap<>();
+            userPasswords = (Map<String, String>) ois.readObject();
+            // 💡 讀取公司名稱綁定資料
+            try {
+                userCompanies = (Map<String, String>) ois.readObject();
+            } catch (Exception e) {
+                userCompanies = new HashMap<>(); // 隊友舊的存檔可能沒有，補空防錯
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
-    public static PlayerData getPlayerData(String username) {
-        return userDatabase.get(username);
+
+    private static void saveData() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+            oos.writeObject(userPasswords);
+            oos.writeObject(userCompanies); // 💡 寫入公司名稱綁定資料
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

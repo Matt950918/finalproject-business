@@ -84,4 +84,8 @@ public class BioSystem {
     public void addSuccessBonus(double value) { this.successBonus += value; }
     public void addBrandValue(double value) { this.brandValue += value; }
     public void addEfficiency(double value) { this.efficiency += value; }
+    // 💡 請在 BioSystem 類別中找到管理 money 的地方，並補上這個公開的 Setter
+    public void setMoney(double money) {
+        this.money = money; // 確保與外部 Company 的 cash 強制絕對同步！
+    }
 }

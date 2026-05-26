@@ -19,22 +19,35 @@ import java.util.List;
 
 public class MainGameController {
 
-    @FXML private Label lblDay;
-    @FXML private Label lblTimer;
-    @FXML private Button btnStockPrice;
-    @FXML private Button btnCash;
+    @FXML
+    private Label lblDay;
+    @FXML
+    private Label lblTimer;
+    @FXML
+    private Button btnStockPrice;
+    @FXML
+    private Button btnCash;
 
     // 彈窗相關元件
-    @FXML private VBox resultOverlay;
-    @FXML private Label lblSettleReason;
-    @FXML private Label lblPriceChange;
-    @FXML private Label lblResultHeader;
-    @FXML private VBox mainGameLayer;
+    @FXML
+    private VBox resultOverlay;
+    @FXML
+    private Label lblSettleReason;
+    @FXML
+    private Label lblPriceChange;
+    @FXML
+    private Label lblResultHeader;
+    @FXML
+    private VBox mainGameLayer;
 
-    @FXML private VBox newsOverlay;
-    @FXML private Label lblNewsTitle;
-    @FXML private VBox optionsBox;
-    @FXML private StackPane industryContentArea;
+    @FXML
+    private VBox newsOverlay;
+    @FXML
+    private Label lblNewsTitle;
+    @FXML
+    private VBox optionsBox;
+    @FXML
+    private StackPane industryContentArea;
 
     // 底層系統
     private bank_system bankSystem = new bank_system();
@@ -46,7 +59,6 @@ public class MainGameController {
     private Timeline timeline;
     private int timeLeft = 60;
 
-    // 💡 關鍵：確保當前顯示的控制器全域可見
     private BankPanelController currentBankController;
 
     // ==========================================
@@ -65,34 +77,29 @@ public class MainGameController {
         btnCash.setText("資金：$" + formatMoney(playerCompany.getCash()));
         btnStockPrice.setText("股價：$" + String.format("%.2f", playerCompany.getStockPrice()));
 
-        // 💡 關鍵保險：只要狀態欄更新，就強迫當前的銀行面板標題一起同步刷新！
         if (playerCompany != null && playerCompany.getIndustry() == IndustryType.BANK && currentBankController != null) {
             currentBankController.updateBankTitle();
         }
     }
+
     // ==========================================
     // 🚀 遊戲生命週期
     // ==========================================
     public void startGame(String customName, IndustryType selectedIndustry) {
         playerCompany = new Company(customName, selectedIndustry);
 
-        playerCompany.spendCash(playerCompany.getCash());
-        playerCompany.earnCash(50_000_000);
-        playerCompany.recordTransaction("🏢 [系統] " + playerCompany.getName() + " 創立，獲得初始資金：$5000 萬");
+        // 初始化流水帳
+        playerCompany.getLedger().clear();
+        playerCompany.recordTransaction("🏢 [系統] " + playerCompany.getName() + " 正式創立！");
+        playerCompany.recordTransaction("💰 [系統] 存入初始資本額：$5,000.00 萬");
 
         if (selectedIndustry == IndustryType.BANK) {
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(bankSystem.getMoney());
-        } else if (selectedIndustry == IndustryType.BIOTECH) {
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(bioSystem.getMoney());
-        } else if (selectedIndustry == IndustryType.TECH) {
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(techSystem.getMoney());
+            bankSystem.setMoney(playerCompany.getCash());
         }
 
-        btnCash.setOnAction(e -> handleRenameCompany());
-        btnStockPrice.setOnAction(e -> handleRenameCompany());
+        // 💡 修正綁定：點擊資金看歷史明細、點擊股價看折線圖走勢。內部無法改名。
+        btnCash.setOnAction(e -> showLedger());
+        btnStockPrice.setOnAction(e -> showStockChart());
 
         NewsDatabase.resetDatabase();
 
@@ -117,15 +124,16 @@ public class MainGameController {
 
         if (playerCompany.getIndustry() == IndustryType.BANK) {
             double beforeMoney = bankSystem.getMoney();
-            List<String> bankReports = bankSystem.tick();
-            double income = bankSystem.getMoney() - beforeMoney;
+            List<String> bankReports = bankSystem.tick(); // 跑收息邏輯
+            double income = bankSystem.getMoney() - beforeMoney; // 算出當日淨利息收入
 
             if (income > 0) {
+                playerCompany.earnCash(income); // 確實加上當天利息
                 playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 💰 收到放款本息：+$" + formatMoney(income));
             }
 
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(bankSystem.getMoney());
+            // 💡 【重要】改用強力 setCash 覆蓋，子系統金庫與公司總資產維持絕對一體化同步
+            bankSystem.setMoney(playerCompany.getCash());
             loadBankPanel();
 
             if (!bankReports.isEmpty()) {
@@ -134,14 +142,12 @@ public class MainGameController {
 
         } else if (playerCompany.getIndustry() == IndustryType.BIOTECH) {
             bioSystem.tick();
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(bioSystem.getMoney());
+            playerCompany.setCash(bioSystem.getMoney());
             loadBioPanel();
 
         } else if (playerCompany.getIndustry() == IndustryType.TECH) {
             techSystem.tick();
-            playerCompany.spendCash(playerCompany.getCash());
-            playerCompany.earnCash(techSystem.getMoney());
+            playerCompany.setCash(techSystem.getMoney());
             loadTechPanel();
         }
 
@@ -207,32 +213,28 @@ public class MainGameController {
         timeline.stop();
 
         double oldPrice = playerCompany.getStockPrice();
-        double oldCash = playerCompany.getCash();
 
+        // 1. 執行事件的影響 (如果有扣事件的公關費，會直接扣除 playerCompany 的現金)
         MarketEvent resultEvent = (selectedOption != null) ? selectedOption.execute(playerCompany) : null;
         playerCompany.updateStockPrice(currentDay, resultEvent);
 
-        double newPrice = playerCompany.getStockPrice();
-        double newCash = playerCompany.getCash();
-        double cost = oldCash - newCash;
-
-        if (cost > 0) {
-            if (playerCompany.getIndustry() == IndustryType.BANK) {
-                bankSystem.deductMoney(cost);
-            } else if (playerCompany.getIndustry() == IndustryType.BIOTECH) {
-                bioSystem.deductMoney(cost);
-            } else if (playerCompany.getIndustry() == IndustryType.TECH) {
-                techSystem.deductMoney(cost);
-            }
-            playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 📰 突發事件/危機公關支出：-$" + formatMoney(cost));
-            updateStatusLabels();
+        // 💡 2. 【核心修正】資產不要與股價大盤隨機波動連動。子金庫維持同步公司主體。
+        // 💡 營業結束時，三大產業的子金庫「死死同步」目前公司的真實實時餘額！
+        if (playerCompany.getIndustry() == IndustryType.BANK) {
+            bankSystem.setMoney(playerCompany.getCash());
+        } else if (playerCompany.getIndustry() == IndustryType.BIOTECH) {
+            bioSystem.setMoney(playerCompany.getCash()); // 💡 剛才補上方法後，這裡就不會再噴紅字了！
+        } else if (playerCompany.getIndustry() == IndustryType.TECH) {
+            techSystem.setMoney(playerCompany.getCash()); // 💡 剛才補上方法後，這裡就不會再噴紅字了！
         }
+
+        updateStatusLabels();
 
         String msg = (selectedOption == null)
                 ? "今日營業時間結束，市場結算完畢。"
                 : ((resultEvent != null) ? resultEvent.getName() : "公司維持穩定經營，市場無重大消息。");
 
-        showResultPopup(msg, oldPrice, newPrice);
+        showResultPopup(msg, oldPrice, playerCompany.getStockPrice());
     }
 
     private void showResultPopup(String message, double oldPrice, double newPrice) {
@@ -291,17 +293,13 @@ public class MainGameController {
             VBox bankPanel = loader.load();
             BankPanelController bankController = loader.getController();
 
-            // 1. 先記錄控制器實體
             this.currentBankController = bankController;
 
-            // 2. 先把面板塞進主畫面的 ContentArea，讓 JavaFX 底層完成場景樹的掛載與渲染準備！
             industryContentArea.getChildren().clear();
             industryContentArea.getChildren().add(bankPanel);
 
-            // 3. 面板確實進入畫面後，再注入數據並觸發 UI 變更！
             bankController.initData(bankSystem, this);
 
-            // 4. 加載當天的貸款案件
             List<bank_LoanRequest> todayRequests = new ArrayList<>();
             todayRequests.add(bank_Customer.createRandomRequest());
             if (Math.random() > 0.5) {
@@ -309,7 +307,6 @@ public class MainGameController {
             }
             bankController.loadRequests(todayRequests);
 
-            // 💡 5. 保險大絕招：用 Platform.runLater 確保在 JavaFX 渲染執行緒的下一幀，強制重刷一次大標題，絕對不被預設值蓋掉！
             javafx.application.Platform.runLater(() -> {
                 if (this.currentBankController != null) {
                     this.currentBankController.updateBankTitle();
@@ -321,6 +318,7 @@ public class MainGameController {
             e.printStackTrace();
         }
     }
+
     private void loadBioPanel() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/BioPanel.fxml"));
@@ -377,48 +375,12 @@ public class MainGameController {
         handleOptionSelected(null);
     }
 
-    private void handleRenameCompany() {
-        if (timeline != null) timeline.pause();
-
-        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog(playerCompany.getName());
-        dialog.setTitle("變更公司名稱");
-        dialog.setHeaderText("📊 進行企業更名/品牌重塑");
-        dialog.setContentText("請輸入新的公司名稱：");
-
-        java.util.Optional<String> result = dialog.showAndWait();
-
-        result.ifPresent(newName -> {
-            String trimmedName = newName.trim();
-            if (!trimmedName.isEmpty()) {
-                String oldName = playerCompany.getName();
-                playerCompany.setName(trimmedName); // 確實改寫 Model 內部的 name
-                playerCompany.recordTransaction("📝 [系統] 公司更名：【" + oldName + "】正式更名為【" + trimmedName + "】");
-
-                updateStatusLabels();
-
-                // 💡 用 runLater 強制通知 UI 執行緒去更換子面板大標題
-                if (playerCompany.getIndustry() == IndustryType.BANK && currentBankController != null) {
-                    javafx.application.Platform.runLater(() -> currentBankController.updateBankTitle());
-                }
-
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-                alert.setTitle("更名成功");
-                alert.setHeaderText(null);
-                alert.setContentText("公司名稱已成功變更為：" + trimmedName);
-                alert.showAndWait();
-            }
-        });
-
-        if (timeline != null) timeline.play();
-    }
-
     @FXML
     private void showStockChart() {
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
         alert.setTitle("股市觀測站");
         alert.setHeaderText("公司歷史股價走勢圖");
 
-        // 💡 修正：改成正确的 new NumberAxis()
         javafx.scene.chart.NumberAxis xAxis = new javafx.scene.chart.NumberAxis();
         xAxis.setLabel("上市天數");
         xAxis.setForceZeroInRange(false);
@@ -437,6 +399,7 @@ public class MainGameController {
 
         if (history != null && !history.isEmpty()) {
             if (history.size() == 1) {
+                // 💡 修正：使用 XYChart.Series
                 javafx.scene.chart.XYChart.Series<Number, Number> startPoint = new javafx.scene.chart.XYChart.Series<>();
                 startPoint.getData().add(new javafx.scene.chart.XYChart.Data<>(0, history.get(0).getPrice()));
                 lineChart.getData().add(startPoint);
@@ -445,6 +408,7 @@ public class MainGameController {
                     double prevPrice = history.get(i - 1).getPrice();
                     double currPrice = history.get(i).getPrice();
 
+                    // 💡 修正：使用 XYChart.Series
                     javafx.scene.chart.XYChart.Series<Number, Number> segment = new javafx.scene.chart.XYChart.Series<>();
                     javafx.scene.chart.XYChart.Data<Number, Number> d1 = new javafx.scene.chart.XYChart.Data<>(i - 1, prevPrice);
                     javafx.scene.chart.XYChart.Data<Number, Number> d2 = new javafx.scene.chart.XYChart.Data<>(i, currPrice);

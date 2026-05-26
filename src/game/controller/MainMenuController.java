@@ -23,6 +23,7 @@ public class MainMenuController {
     // ==========================================
     // 📦 UI Layer
     // ==========================================
+    @FXML private TextField txtCompanyName; // 畫面上原有的公司名稱輸入框
     @FXML private VBox mainMenuLayer;
     @FXML private VBox instructionLayer;
     @FXML private VBox loginLayer;
@@ -34,6 +35,8 @@ public class MainMenuController {
     @FXML private PasswordField txtPassword;
     @FXML private Label lblLoginMessage;
     @FXML private Label lblWelcome;
+
+    public static String companyName = "遠東集團"; // 預設值
 
     // ==========================================
     // 👤 登入狀態
@@ -64,6 +67,7 @@ public class MainMenuController {
 
     // ==========================================
     // 🧹 模組化：乾淨的 BGM 初始化邏輯
+    // ==========================================
     private void initBGM() {
         if (bgmPlayer != null) return;
 
@@ -76,7 +80,7 @@ public class MainMenuController {
                 bgmPlayer.setCycleCount(MediaPlayer.INDEFINITE);
                 bgmPlayer.setVolume(0.3);
 
-                // 👇 加上這行：設定音樂永遠從第 2 秒開始播放
+                // 設定音樂永遠從第 2 秒開始播放
                 bgmPlayer.setStartTime(Duration.seconds(2));
 
                 bgmPlayer.play();
@@ -117,37 +121,48 @@ public class MainMenuController {
     }
 
     // ==========================================
-    // 🔐 登入
+    // 🔐 登入 (老玩家：直接撈取當初綁定的公司名，不需要再打一次名字)
     // ==========================================
     @FXML
     private void handleLogin(ActionEvent event) {
         String user = txtUsername.getText();
         String pass = txtPassword.getText();
 
-        if (PlayerAccount.login(user, pass)) {
+        // 直接呼叫我們寫好的擴充方法，登入成功就順便把資料庫裡綁定的公司名稱拿回來
+        String boundCompanyName = game.model.PlayerAccount.loginAndGetCompany(user, pass);
+
+        if (boundCompanyName != null) {
             currentUser = user;
-            updateWelcomeUI(); // 這裡直接呼叫模組化後的方法，乾淨俐落
+
+            // 將這台帳號綁定的公司名稱，直接灌進 Mainapp 裡面
+            core.Mainapp.setGlobalCompanyName(boundCompanyName);
+
+            updateWelcomeUI();
             hideLoginLayer(null);
         } else {
             lblLoginMessage.setText("❌ 帳號或密碼錯誤！");
+            lblLoginMessage.setStyle("-fx-text-fill: #e60012;");
         }
     }
 
     // ==========================================
-    // 📝 註冊
+    // 📝 註冊 (新玩家：在同一個畫面上輸入帳密與想取的名字，直接註冊綁定！)
     // ==========================================
     @FXML
     private void handleRegister(ActionEvent event) {
         String user = txtUsername.getText();
         String pass = txtPassword.getText();
+        String compName = txtCompanyName.getText(); // 💡 沿用畫面上的輸入框！
 
         if (user.isEmpty() || pass.isEmpty()) {
-            lblLoginMessage.setText("⚠️ 不可為空！");
+            lblLoginMessage.setText("⚠️ 帳號或密碼不可為空！");
+            lblLoginMessage.setStyle("-fx-text-fill: #e60012;");
             return;
         }
 
-        if (PlayerAccount.register(user, pass)) {
-            lblLoginMessage.setText("✅ 註冊成功！");
+        // 💡 呼叫我們擴充的 register 方法，把名字、帳號、密碼一次打包綁定存檔！
+        if (PlayerAccount.register(user, pass, compName)) {
+            lblLoginMessage.setText("✅ 註冊成功！請直接點擊登入。");
             lblLoginMessage.setStyle("-fx-text-fill: #00FF00;");
         } else {
             lblLoginMessage.setText("❌ 帳號已存在！");
@@ -163,6 +178,7 @@ public class MainMenuController {
         lblLoginMessage.setText("");
         txtUsername.clear();
         txtPassword.clear();
+        txtCompanyName.clear(); // 切換時清空
         mainMenuLayer.setVisible(false);
         loginLayer.setVisible(true);
     }
@@ -178,6 +194,8 @@ public class MainMenuController {
         mainMenuLayer.setVisible(false);
         instructionLayer.setVisible(true);
     }
+
+    // 已經幫妳把舊的、會報錯的 handleRegisterSubmit 刪除了，保持程式碼最乾淨的狀態
 
     @FXML
     private void hideInstructions(ActionEvent event) {

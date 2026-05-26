@@ -81,7 +81,6 @@ public class Company implements Serializable {
 
         this.stockPrice = Math.max(1.0, this.stockPrice);
 
-        // 記錄歷史股價 (使用你夥伴寫的 StockRecord！)
         this.stockHistory.add(new StockRecord(currentTurn, this.stockPrice));
     }
 
@@ -101,6 +100,11 @@ public class Company implements Serializable {
     public IndustryType getIndustry() { return industry; }
 
     public double getCash() { return cash; }
+
+    // 💡 關鍵新增：強制設定金額方法
+    public void setCash(double amount) {
+        this.cash = amount;
+    }
 
     public boolean spendCash(double amount) {
         if (this.cash >= amount) {
@@ -122,7 +126,7 @@ public class Company implements Serializable {
         this.reputation += amount;
         this.reputation = Math.max(0, Math.min(100, this.reputation));
     }
-    // 💡 讓外部可以自由修改公司名稱
+
     public void setName(String newName) {
         this.name = newName;
     }

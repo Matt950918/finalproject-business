@@ -94,4 +94,8 @@ public class TechSystem {
     public double getMoney() { return money; }
     public int getAiResearchLevel() { return aiResearchLevel; }
     public int getActiveContractsCount() { return activeContracts.size(); }
+    // 💡 請在 TechSystem 類別中找到管理 money 的地方，並補上這個公開的 Setter
+    public void setMoney(double money) {
+        this.money = money; // 確保與外部 Company 的 cash 強制絕對同步！
+    }
 }

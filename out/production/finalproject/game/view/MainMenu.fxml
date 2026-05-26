@@ -15,7 +15,7 @@
 
     <VBox fx:id="mainMenuLayer" alignment="CENTER" spacing="25.0">
 
-        <Label text="遊戲名字" styleClass="title-label" />
+        <Label text="商業大亨模擬器" styleClass="title-label" />
 
         <VBox alignment="CENTER" spacing="20.0">
 
@@ -38,12 +38,11 @@
     </VBox>
 
 
-
     <VBox fx:id="loginLayer"
           alignment="CENTER"
           spacing="20.0"
           visible="false"
-          style="-fx-background-color: rgba(255, 255, 255, 0.75);">
+          style="-fx-background-color: rgba(255, 255, 255, 0.75); -fx-padding: 40;">
 
         <Label text="玩家登入 / 註冊"
                style="-fx-text-fill: #5A5C69; -fx-font-size: 36px; -fx-font-weight: bold;" />
@@ -52,38 +51,42 @@
                text=""
                style="-fx-text-fill: #E74A3B; -fx-font-size: 16px;" />
 
-        <VBox spacing="15" maxWidth="300">
+        <VBox spacing="15" maxWidth="300" alignment="CENTER">
             <TextField fx:id="txtUsername"
                        promptText="請輸入帳號"
-                       style="-fx-font-size: 18px; -fx-padding: 10;" />
+                       style="-fx-font-size: 16px; -fx-padding: 10;" />
 
             <PasswordField fx:id="txtPassword"
                            promptText="請輸入密碼"
-                           style="-fx-font-size: 18px; -fx-padding: 10;" />
+                           style="-fx-font-size: 16px; -fx-padding: 10;" />
         </VBox>
 
-        <VBox alignment="CENTER" spacing="10">
-            <Label text="請輸入您的集團/帳號名稱：" style="-fx-font-size: 14px;" />
-
-            <TextField fx:id="txtCompanyName" promptText="例如：遠東集團、宗恩創投..." maxWidth="200" />
-
+        <VBox alignment="CENTER" spacing="8" maxWidth="300">
+            <Label text="✨ 註冊新帳號時請輸入集團/公司名稱："
+                   style="-fx-font-size: 14px; -fx-text-fill: #4e73df; -fx-font-weight: bold;" />
+            <TextField fx:id="txtCompanyName"
+                       promptText="例如：遠東集團、品萱金控..."
+                       style="-fx-font-size: 16px; -fx-padding: 10;" />
         </VBox>
+
         <HBox spacing="20" alignment="CENTER">
             <Button text="登入"
                     styleClass="switch-button"
                     onAction="#handleLogin"
-                    prefWidth="120" />
+                    prefWidth="130" />
 
             <Button text="註冊新帳號"
                     styleClass="switch-button"
                     onAction="#handleRegister"
-                    prefWidth="120" />
+                    prefWidth="130" />
         </HBox>
 
         <Button text="返回 BACK"
                 styleClass="switch-button button-red"
-                onAction="#hideLoginLayer" />
+                onAction="#hideLoginLayer"
+                prefWidth="120" />
     </VBox>
+
 
     <VBox fx:id="instructionLayer"
           alignment="CENTER"
@@ -92,7 +95,7 @@
           style="-fx-background-color: rgba(255, 255, 255, 0.75); -fx-padding: 50;">
 
         <Label text="遊戲說明"
-               style="-fx-text-fill: #d5c8ef; -fx-font-size: 40px; -fx-font-weight: bold;" />
+               style="-fx-text-fill: #5A5C69; -fx-font-size: 40px; -fx-font-weight: bold;" />
 
         <ScrollPane fitToWidth="true"
                     prefWidth="600"
@@ -102,8 +105,8 @@
             <VBox spacing="10"
                   style="-fx-background-color: #FFFFFF; -fx-padding: 25; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);">
 
-                <Text fill="#d5c8ef"
-                      style="-fx-font-size: 18px; -fx-line-spacing: 10px;"
+                <Text fill="#5A5C69"
+                      style="-fx-font-size: 18px; -fx-line-spacing: 12px;"
                       text="【銀行業】核准貸款賺利息，小心客戶跑路！&#10;&#10;【科技業】研發技術，對抗競爭對手！&#10;&#10;【生技業】尋找資金，挑戰解盲機率！" />
             </VBox>
         </ScrollPane>
