@@ -18,12 +18,9 @@ public class Mainapp extends Application {
     @Override
     public void start(Stage stage) {
         primaryStage = stage;
-        showHome(); // 啟動時先載入首頁
+        showHome();
     }
 
-    // ==========================================
-    // 🏠 首頁 (載入主選單)
-    // ==========================================
     public static void showHome() {
         try {
             Parent root = FXMLLoader.load(Mainapp.class.getResource("/game/view/MainMenu.fxml"));
@@ -32,12 +29,11 @@ public class Mainapp extends Application {
             primaryStage.show();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("❌ 找不到 MainMenu.fxml，請確認路徑是否正確！");
         }
     }
 
     // ==========================================
-    // 🏢 公司選擇畫面
+    // 🏢 公司選擇畫面 (已拿掉名字輸入框 ❌)
     // ==========================================
     public static void showCompanySelect() {
         Text title = new Text("請選擇公司類型");
@@ -48,19 +44,18 @@ public class Mainapp extends Application {
         Button bioBtn = new Button("🧬 生技業");
         Button backBtn = new Button("返回首頁");
 
-        // 套用樣式類別（與 global_theme.css 對齊）
         bankBtn.getStyleClass().add("switch-button");
         techBtn.getStyleClass().add("switch-button");
         bioBtn.getStyleClass().add("switch-button");
         backBtn.getStyleClass().add("switch-button");
-        backBtn.setStyle("-fx-text-fill: #E74A3B;"); // 設定返回按鈕為醒目紅色
+        backBtn.setStyle("-fx-text-fill: #E74A3B;");
 
-        // 點擊後直接傳遞 IndustryType Enum 進入遊戲
         bankBtn.setOnAction(e -> enterCompany(IndustryType.BANK));
         techBtn.setOnAction(e -> enterCompany(IndustryType.TECH));
         bioBtn.setOnAction(e -> enterCompany(IndustryType.BIOTECH));
         backBtn.setOnAction(e -> showHome());
 
+        // 恢復成原本單純的按鈕布局
         VBox root = new VBox(20, title, bankBtn, techBtn, bioBtn, backBtn);
         root.setStyle("-fx-alignment: center; -fx-padding: 40; -fx-background-color: #F4F6F9;");
 
@@ -68,7 +63,7 @@ public class Mainapp extends Application {
         try {
             scene.getStylesheets().add(Mainapp.class.getResource("/game/view/global_theme.css").toExternalForm());
         } catch (Exception e) {
-            System.err.println("⚠️ 載入選單樣式表失敗，請確認 global_theme.css 位置");
+            System.err.println("⚠️ 載入選單樣式表失敗");
         }
 
         primaryStage.setScene(scene);
@@ -82,14 +77,15 @@ public class Mainapp extends Application {
             FXMLLoader loader = new FXMLLoader(Mainapp.class.getResource("/game/view/MainGame.fxml"));
             Parent root = loader.load();
 
-            // 取得對應畫面的 Controller，將選擇的產業傳遞過去
+            // 💡 直接給預設名字「遠東集團」開局，不叫玩家在這裡輸入了！
+            String defaultName = "遠東集團";
+
             MainGameController controller = loader.getController();
-            controller.startGame(type);
+            controller.startGame(defaultName, type);
 
             primaryStage.setScene(new Scene(root, 900, 650));
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("❌ 找不到 MainGame.fxml，請確認檔案是否有放在 /game/view/ 裡面！");
         }
     }
 

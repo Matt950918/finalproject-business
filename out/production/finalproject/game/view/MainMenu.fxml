@@ -37,6 +37,8 @@
         </VBox>
     </VBox>
 
+
+
     <VBox fx:id="loginLayer"
           alignment="CENTER"
           spacing="20.0"
@@ -60,6 +62,12 @@
                            style="-fx-font-size: 18px; -fx-padding: 10;" />
         </VBox>
 
+        <VBox alignment="CENTER" spacing="10">
+            <Label text="請輸入您的集團/帳號名稱：" style="-fx-font-size: 14px;" />
+
+            <TextField fx:id="txtCompanyName" promptText="例如：遠東集團、宗恩創投..." maxWidth="200" />
+
+        </VBox>
         <HBox spacing="20" alignment="CENTER">
             <Button text="登入"
                     styleClass="switch-button"

@@ -6,6 +6,7 @@ import java.util.List;
 
 public class Company implements Serializable {
 
+    private String name;
     private IndustryType industry;
     private double cash;
     private int reputation;
@@ -27,7 +28,7 @@ public class Company implements Serializable {
     public void summarizeLedger(int month) {
         ledger.clear();
         ledger.add("=================================");
-        ledger.add("📅 【遠東集團 第 " + month + " 季財務月報】");
+        ledger.add("📅 【" + this.name + " 第 " + month + " 季財務月報】");
         ledger.add("過往流水帳明細已由會計部封存歸檔。");
         ledger.add("=================================");
     }
@@ -38,7 +39,8 @@ public class Company implements Serializable {
     private double stockPrice;
     private List<StockRecord> stockHistory;
 
-    public Company(IndustryType industry) {
+    public Company(String name, IndustryType industry) {
+        this.name = name;
         this.industry = industry;
         this.cash = 50000000.0;
         this.reputation = 50;
@@ -84,6 +86,9 @@ public class Company implements Serializable {
     }
 
     // --- 以下是 Getter 與 Setter 方法 ---
+    public String getName() {
+        return name;
+    }
 
     public double getStockPrice() {
         return stockPrice;
@@ -117,7 +122,10 @@ public class Company implements Serializable {
         this.reputation += amount;
         this.reputation = Math.max(0, Math.min(100, this.reputation));
     }
-
+    // 💡 讓外部可以自由修改公司名稱
+    public void setName(String newName) {
+        this.name = newName;
+    }
     public int getLevel() { return level; }
 
     public void levelUp() { this.level += 1; }
