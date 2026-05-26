@@ -433,4 +433,5 @@ public class MainGameController {
         alert.getDialogPane().setContent(lineChart);
         alert.showAndWait();
     }
+
 }

@@ -9,17 +9,15 @@ import java.util.List;
  */
 public class BioSystem {
 
-    // 統一初始資金：5000 萬
     private double money = 50_000_000;
-
     private double successBonus = 0;   // 研發成功率加成
     private double brandValue = 0;     // 社會形象
-    private double efficiency = 0;     // 成本降低率
+    private double efficiency = 0;     // 成本降低率 (例如 0.1 代表 10% 成本節省)
 
     private List<Drug> drugs = new ArrayList<>();
 
     // ==========================================
-    // 💸 核心金流：確實從金庫扣款的防呆機制
+    // 💸 核心金流管理
     // ==========================================
     public boolean deductMoney(double amount) {
         if (money >= amount) {
@@ -34,58 +32,50 @@ public class BioSystem {
     }
 
     // ==========================================
-    // 🔬 藥物研發系統
+    // 🔬 藥物研發系統 (核心邏輯：品牌與效率的應用)
     // ==========================================
-    public void addDrug(Drug drug) {
-        drugs.add(drug);
-    }
-
     public boolean researchDrug(Drug drug) {
-        double cost = drug.getCost() * (1 - efficiency);
+        // 使用 efficiency 計算實際研發成本
+        double cost = drug.getCost() * (1.0 - efficiency);
 
         if (!deductMoney(cost)) {
-            System.out.println("❌ 資金不足，無法啟動 " + drug.getName() + " 的研發專案！");
             return false;
         }
 
+        // 使用 successBonus 進行擲骰機率運算
         boolean success = drug.tryDevelop(successBonus);
-
-        if (success) {
-            System.out.println("✅ " + drug.getName() + " 研發成功！取得專利！");
-        } else {
-            System.out.println("💥 " + drug.getName() + " 臨床實驗失敗，研發經費付諸東流...");
-        }
 
         return success;
     }
 
     public void sellDrug(Drug drug, double demand) {
-        if (!drug.isDiscovered()) return;
-
-        double revenue = demand * drug.getPrice() * (1 + brandValue);
+        // 品牌形象會加成銷售利潤
+        double revenue = demand * drug.getPrice() * (1.0 + brandValue);
         earnMoney(revenue);
     }
 
     // ==========================================
-    // ⏱ 每回合運作 (預留給未來推進研發進度條)
-    // ==========================================
-    public void tick() {
-        // 未來如果有「持續性銷售的藥品」或「需要跑好幾天的研發專案」，可以寫在這邊結算
-    }
-
-    // ==========================================
-    // ⚙️ 科技樹與屬性 Getters / Setters
+    // ⚙️ 屬性存取器 (Getters & Setters)
     // ==========================================
     public double getMoney() { return money; }
-    public double getSuccessBonus() { return successBonus; } // 👈 補上這個
-    public double getBrandValue() { return brandValue; }     // 👈 補上這個
-    public double getEfficiency() { return efficiency; }     // 👈 補上這個
+    public void setMoney(double money) { this.money = money; }
 
+    public double getSuccessBonus() { return successBonus; }
+    public double getBrandValue() { return brandValue; }
+
+    // 為了讓 Controller 能正確顯示「百分比」(如 100% 研發效率)，
+    // 我們回傳 1.0 + efficiency (預設 efficiency 為 0，回傳 1.0)
+    public double getEfficiencyRate() { return 1.0 + efficiency; }
+    public double getEfficiency() { return efficiency; }
+
+    // 科技樹呼叫這些方法來更新狀態
     public void addSuccessBonus(double value) { this.successBonus += value; }
     public void addBrandValue(double value) { this.brandValue += value; }
     public void addEfficiency(double value) { this.efficiency += value; }
-    // 💡 請在 BioSystem 類別中找到管理 money 的地方，並補上這個公開的 Setter
-    public void setMoney(double money) {
-        this.money = money; // 確保與外部 Company 的 cash 強制絕對同步！
+
+    public void tick() {
+        // 這裡是你原本預留的邏輯區塊
+        // 如果未來有需要隨時間變化的數值（例如：廣告效果隨時間衰退），都可以在這處理
+        System.out.println("BioSystem 執行每回合更新...");
     }
 }

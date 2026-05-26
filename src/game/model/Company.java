@@ -6,6 +6,17 @@ import java.util.List;
 
 public class Company implements Serializable {
 
+    private double brandImage; // 品牌形象數值
+    private double researchEfficiency; // 研發效率
+
+    // Getter 和 Setter
+    public double getBrandImage() { return brandImage; }
+    public void setBrandImage(double val) { this.brandImage = val; }
+
+    // 增加一個更新數據的方法
+    public void addBrandImage(double amount) {
+        this.brandImage += amount;
+    }
     private String name;
     private IndustryType industry;
     private double cash;
