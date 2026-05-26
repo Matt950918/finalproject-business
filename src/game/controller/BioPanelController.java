@@ -102,6 +102,17 @@ public class BioPanelController {
     }
 
     private void updateStatusLabels() {
-        // 這裡可以預留未來向底層取得升級係數，更新畫面上方的加成數字
+        // 1. 取得底層的加成數據
+        double bonus = bioSystem.getSuccessBonus(); // 得到如 0.05, 0.10 等
+
+        // 2. 將小數轉換為漂亮的百分比文字 (例如 0.05 -> "+5%")
+        String bonusText = String.format("+%.0f%%", bonus * 100);
+
+        // 3. 顯示在你的 Label 上
+        lblSuccessBonusStatus.setText("研發成功率加成: " + bonusText);
+
+        // 💡 提示：如果你還有其他 Label（例如顯示目前總機率、或品牌加成），也可以一併在這邊更新
+        // 假設你未來有 lblBrandStatus，可以這樣寫：
+        // lblBrandStatus.setText("品牌加成: " + String.format("+%.0f%%", bioSystem.getBrandValue() * 100));
     }
 }

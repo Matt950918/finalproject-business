@@ -77,6 +77,10 @@ public class BioSystem {
     // ⚙️ 科技樹與屬性 Getters / Setters
     // ==========================================
     public double getMoney() { return money; }
+    public double getSuccessBonus() { return successBonus; } // 👈 補上這個
+    public double getBrandValue() { return brandValue; }     // 👈 補上這個
+    public double getEfficiency() { return efficiency; }     // 👈 補上這個
+
     public void addSuccessBonus(double value) { this.successBonus += value; }
     public void addBrandValue(double value) { this.brandValue += value; }
     public void addEfficiency(double value) { this.efficiency += value; }
