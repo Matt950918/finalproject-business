@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox alignment="CENTER" spacing="25.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="game.controller.GachaController" prefWidth="650.0" prefHeight="450.0" style="-fx-background-color: #f8f9fc;">
+    <padding>
+        <Insets top="30" right="40" bottom="30" left="40"/>
+    </padding>
+
+    <VBox alignment="CENTER" spacing="8.0" style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 10, 0, 0, 4);">
+        <Label text="🎲 機會命運中心" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2e59d9;"/>
+        <Label text="消耗 $100.00 萬資金，抽取「機會」或「命運」" style="-fx-font-size: 14px; -fx-text-fill: #858796;"/>
+    </VBox>
+
+    <VBox alignment="CENTER" prefHeight="160.0" style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-border-color: #e3e6f0; -fx-border-width: 1; -fx-padding: 25;">
+        <Label fx:id="lblResultDisplay" text="牌卡準備完畢，可抽取機會/命運..." wrapText="true" alignment="CENTER" textAlignment="CENTER" style="-fx-font-size: 15px; -fx-text-fill: #4e73df; -fx-font-weight: bold;"/>
+    </VBox>
+
+    <Button fx:id="btnGachaAction" onAction="#handleDraw" text="🎲 抽取機會命運 (花費 $100 萬)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: #2e59d9; -fx-background-radius: 12; -fx-padding: 12 35; -fx-cursor: hand;"/>
+</VBox>

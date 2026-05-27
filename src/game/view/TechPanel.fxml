@@ -12,7 +12,7 @@
 
     <HBox alignment="CENTER_LEFT" style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-padding: 15 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 5);">
         <VBox spacing="5">
-            <Label text="💻 遠東 IC 設計與硬體供應鏈中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+            <Label fx:id="lblTechTitle" text="💻 遠東 IC 設計與硬體供應鏈中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
             <Label text="掌握 EDA 授權、電路架構最佳化與晶圓代工良率" style="-fx-font-size: 14px; -fx-text-fill: #777777;" />
         </VBox>
         <Region HBox.hgrow="ALWAYS" />

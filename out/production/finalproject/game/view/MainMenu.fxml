@@ -15,7 +15,7 @@
 
     <VBox fx:id="mainMenuLayer" alignment="CENTER" spacing="25.0">
 
-        <Label text="商業大亨模擬器" styleClass="title-label" />
+        <Label text="大富翁" styleClass="title-label" />
 
         <VBox alignment="CENTER" spacing="20.0">
 
@@ -62,10 +62,10 @@
         </VBox>
 
         <VBox alignment="CENTER" spacing="8" maxWidth="300">
-            <Label text="✨ 註冊新帳號時請輸入集團/公司名稱："
+            <Label text="✨ 註冊新帳號時請輸入集團名稱："
                    style="-fx-font-size: 14px; -fx-text-fill: #4e73df; -fx-font-weight: bold;" />
             <TextField fx:id="txtCompanyName"
-                       promptText="例如：遠東集團、品萱金控..."
+                       promptText="例如：中央大學..."
                        style="-fx-font-size: 16px; -fx-padding: 10;" />
         </VBox>
 

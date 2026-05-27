@@ -93,16 +93,23 @@ public class bank_LoanRequest {
      * @return 重新包裝過後的全新貸款申請案 (也就是打折、換條件後捲土重來的他)
      */
     public bank_LoanRequest processRejection() {
-        this.rejectCount++;
+        this.rejectCount++; // 0 變成 1
 
         // 如果只被拒絕過 1 次，他就會變更條件重新回來敲門
         if (this.rejectCount == 1) {
             // 呼叫 bank_Customer 的劇本庫生成二度挑戰的對話與數據
             bank_LoanRequest loopRequest = bank_Customer.createRequestByName(this.applicantName, this.rejectCount);
+
+            // 💡 核心修正：必須把當前已經被拒絕 1 次的紀錄，強制灌給這個新產生出來的物件！
+            // 否則新物件在建構子裡會把 rejectCount 重設為 0，導致遊戲陷入無限敲門迴圈、永遠拒絕不掉！
+            if (loopRequest != null) {
+                loopRequest.setRejectCount(this.rejectCount);
+            }
+
             return loopRequest;
         }
 
-        // 如果被拒絕 2 次以上，NPC 就會徹底放棄不回來了
+        // 👍 當物件帶著 rejectCount = 1 進來，再次被拒絕變成 2 時，就會順利跳到這裡，NPC 徹底知難而退！
         System.out.println("❌ " + this.applicantName + " 碎碎念：「這家銀行真難借，我去別家！」");
         return null;
     }

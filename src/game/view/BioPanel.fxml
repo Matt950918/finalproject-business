@@ -12,7 +12,7 @@
 
     <HBox alignment="CENTER_LEFT" style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-padding: 15 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 5);">
         <VBox spacing="5">
-            <Label text="🧬 遠東生物科技研發中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+            <Label fx:id="lblBioTitle" text="🧬 遠東生物科技研發中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
             <Label text="CEO 臨床新藥開發控制台" style="-fx-font-size: 14px; -fx-text-fill: #777777;" />
         </VBox>
         <Region HBox.hgrow="ALWAYS" />

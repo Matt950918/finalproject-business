@@ -28,6 +28,12 @@ public class MainGameController {
     @FXML
     private Button btnCash;
 
+    // 💡 新增的兩個按鈕變數，保持在底部
+    @FXML
+    private Button btnGacha;
+    @FXML
+    private Button btnRanking;
+
     // 彈窗相關元件
     @FXML
     private VBox resultOverlay;
@@ -60,12 +66,74 @@ public class MainGameController {
     private int timeLeft = 60;
 
     private BankPanelController currentBankController;
+    private BioPanelController currentBioController;
+    private TechPanelController currentTechController;
+
+    // 💡 整理乾淨：只保留這一個排行榜系統宣告
+    private RankingSystem rankingSystem = new RankingSystem();
 
     // ==========================================
-    // 🔗 開放給外部呼叫的接口
+    // 🎲 新增的功能介面載入（移至下方觸發）
+    // ==========================================
+
+    /**
+     * 點擊「商業抽卡」按鈕時觸發
+     */
+    @FXML
+    private void handleLoadGacha(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/GachaPanel.fxml"));
+            VBox gachaPanel = loader.load();
+            GachaController gachaController = loader.getController();
+
+            gachaController.initData(this);
+            this.currentBankController = null;
+
+            industryContentArea.getChildren().clear();
+            industryContentArea.getChildren().add(gachaPanel);
+
+            System.out.println("🎲 已成功切換至抽卡系統介面");
+        } catch (Exception e) {
+            System.err.println("❌ 載入 GachaPanel.fxml 失敗！請確認檔案路徑。");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 點擊「企業排行榜」按鈕時觸發
+     */
+    @FXML
+    private void handleLoadRanking(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/RankingPanel.fxml"));
+            VBox rankingPanel = loader.load();
+            RankingPanelController rankingController = loader.getController();
+
+            rankingController.showLeaderboard(rankingSystem);
+            this.currentBankController = null;
+
+            industryContentArea.getChildren().clear();
+            industryContentArea.getChildren().add(rankingPanel);
+
+            System.out.println("🏆 已成功切換至排行榜介面");
+        } catch (Exception e) {
+            System.err.println("❌ 載入 RankingPanel.fxml 失敗！請確認檔案路徑。");
+            e.printStackTrace();
+        }
+    }
+
+    // ==========================================
+    // 🔗 開放給外部呼叫的接口與其餘舊程式碼（保持不變）
     // ==========================================
     public Company getPlayerCompany() {
         return playerCompany;
+    }
+    public game.model.tech.TechSystem getTechSystem() {
+        return techSystem;
+    }
+
+    public game.model.bio.BioSystem getBioSystem() {
+        return bioSystem;
     }
 
     public int getCurrentDay() {
@@ -77,18 +145,20 @@ public class MainGameController {
         btnCash.setText("資金：$" + formatMoney(playerCompany.getCash()));
         btnStockPrice.setText("股價：$" + String.format("%.2f", playerCompany.getStockPrice()));
 
-        if (playerCompany != null && playerCompany.getIndustry() == IndustryType.BANK && currentBankController != null) {
-            currentBankController.updateBankTitle();
+        if (playerCompany != null) {
+            // 根據不同產業，更新各自面板頂部的標題
+            if (playerCompany.getIndustry() == IndustryType.BANK && currentBankController != null) {
+                currentBankController.updateBankTitle();
+            } else if (playerCompany.getIndustry() == IndustryType.BIOTECH && currentBioController != null) {
+                currentBioController.updateBioTitle(); // 💡 確保動態更新生技標題
+            } else if (playerCompany.getIndustry() == IndustryType.TECH && currentTechController != null) {
+                currentTechController.updateTechTitle(); // 💡 確保動態更新科技標題
+            }
         }
     }
 
-    // ==========================================
-    // 🚀 遊戲生命週期
-    // ==========================================
     public void startGame(String customName, IndustryType selectedIndustry) {
         playerCompany = new Company(customName, selectedIndustry);
-
-        // 初始化流水帳
         playerCompany.getLedger().clear();
         playerCompany.recordTransaction("🏢 [系統] " + playerCompany.getName() + " 正式創立！");
         playerCompany.recordTransaction("💰 [系統] 存入初始資本額：$5,000.00 萬");
@@ -97,12 +167,10 @@ public class MainGameController {
             bankSystem.setMoney(playerCompany.getCash());
         }
 
-        // 💡 修正綁定：點擊資金看歷史明細、點擊股價看折線圖走勢。內部無法改名。
         btnCash.setOnAction(e -> showLedger());
         btnStockPrice.setOnAction(e -> showStockChart());
 
         NewsDatabase.resetDatabase();
-
         if (newsOverlay != null) newsOverlay.setVisible(false);
         if (resultOverlay != null) resultOverlay.setVisible(false);
 
@@ -121,30 +189,30 @@ public class MainGameController {
 
     private void startNewDay() {
         currentDay++;
-
+        if (playerCompany != null) {
+            playerCompany.decrementBuffTurns();
+        }
+        // ✅ 改成這行，優雅地讓它自己在內部扣減：
+        GachaController.decrementCooldown();
         if (playerCompany.getIndustry() == IndustryType.BANK) {
             double beforeMoney = bankSystem.getMoney();
-            List<String> bankReports = bankSystem.tick(); // 跑收息邏輯
-            double income = bankSystem.getMoney() - beforeMoney; // 算出當日淨利息收入
+            List<String> bankReports = bankSystem.tick();
+            double income = bankSystem.getMoney() - beforeMoney;
 
             if (income > 0) {
-                playerCompany.earnCash(income); // 確實加上當天利息
+                playerCompany.earnCash(income);
                 playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 💰 收到放款本息：+$" + formatMoney(income));
             }
-
-            // 💡 【重要】改用強力 setCash 覆蓋，子系統金庫與公司總資產維持絕對一體化同步
             bankSystem.setMoney(playerCompany.getCash());
             loadBankPanel();
 
             if (!bankReports.isEmpty()) {
                 showBankReportPopup(bankReports);
             }
-
         } else if (playerCompany.getIndustry() == IndustryType.BIOTECH) {
             bioSystem.tick();
             playerCompany.setCash(bioSystem.getMoney());
             loadBioPanel();
-
         } else if (playerCompany.getIndustry() == IndustryType.TECH) {
             techSystem.tick();
             playerCompany.setCash(techSystem.getMoney());
@@ -152,7 +220,6 @@ public class MainGameController {
         }
 
         updateStatusLabels();
-
         timeLeft = 60;
         timeline.play();
 
@@ -173,9 +240,7 @@ public class MainGameController {
 
     private void showBankReportPopup(List<String> reports) {
         StringBuilder sb = new StringBuilder();
-        for (String r : reports) {
-            sb.append(r).append("\n\n");
-        }
+        for (String r : reports) sb.append(r).append("\n\n");
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
         alert.setTitle("🏦 銀行每日帳務匯報");
         alert.setHeaderText("客戶結案與違約動態");
@@ -187,7 +252,6 @@ public class MainGameController {
     private void showNewsPopup(DailyNews news) {
         optionsBox.getChildren().clear();
         lblNewsTitle.setText(news.getTitle());
-
         for (NewsOption option : news.getOptions()) {
             Button btn = new Button(option.getDescription());
             btn.getStyleClass().add("switch-button");
@@ -203,37 +267,26 @@ public class MainGameController {
 
     @FXML
     private void handleSkipDay(ActionEvent event) {
-        if (newsOverlay != null) {
-            newsOverlay.setVisible(false);
-        }
+        if (newsOverlay != null) newsOverlay.setVisible(false);
         timeline.play();
     }
 
     private void handleOptionSelected(NewsOption selectedOption) {
         timeline.stop();
-
         double oldPrice = playerCompany.getStockPrice();
-
-        // 1. 執行事件的影響 (如果有扣事件的公關費，會直接扣除 playerCompany 的現金)
         MarketEvent resultEvent = (selectedOption != null) ? selectedOption.execute(playerCompany) : null;
         playerCompany.updateStockPrice(currentDay, resultEvent);
 
-        // 💡 2. 【核心修正】資產不要與股價大盤隨機波動連動。子金庫維持同步公司主體。
-        // 💡 營業結束時，三大產業的子金庫「死死同步」目前公司的真實實時餘額！
         if (playerCompany.getIndustry() == IndustryType.BANK) {
             bankSystem.setMoney(playerCompany.getCash());
         } else if (playerCompany.getIndustry() == IndustryType.BIOTECH) {
-            bioSystem.setMoney(playerCompany.getCash()); // 💡 剛才補上方法後，這裡就不會再噴紅字了！
+            bioSystem.setMoney(playerCompany.getCash());
         } else if (playerCompany.getIndustry() == IndustryType.TECH) {
-            techSystem.setMoney(playerCompany.getCash()); // 💡 剛才補上方法後，這裡就不會再噴紅字了！
+            techSystem.setMoney(playerCompany.getCash());
         }
 
         updateStatusLabels();
-
-        String msg = (selectedOption == null)
-                ? "今日營業時間結束，市場結算完畢。"
-                : ((resultEvent != null) ? resultEvent.getName() : "公司維持穩定經營，市場無重大消息。");
-
+        String msg = (selectedOption == null) ? "今日營業時間結束，市場結算完畢。" : ((resultEvent != null) ? resultEvent.getName() : "公司維持穩定經營，市場無重大消息。");
         showResultPopup(msg, oldPrice, playerCompany.getStockPrice());
     }
 
@@ -248,7 +301,7 @@ public class MainGameController {
             lblPriceChange.setStyle("-fx-text-fill: #E74A3B;");
         } else if (diff < -0.01) {
             lblResultHeader.setText("📉 損失預警報告");
-            lblPriceChange.setText(String.format("股價變動: -$%.2f (%.2f%%)", Math.abs(diff), percent));
+            lblPriceChange.setText(String.format("股價變动: -$%.2f (%.2f%%)", Math.abs(diff), percent));
             lblPriceChange.setStyle("-fx-text-fill: #1CC88A;");
         } else {
             lblResultHeader.setText("📊 市場觀察報告");
@@ -276,7 +329,6 @@ public class MainGameController {
         boolean isNegative = amount < 0;
         double absAmount = Math.abs(amount);
         String formattedStr;
-
         if (absAmount >= 1_000_000_00) {
             formattedStr = String.format("%.2f 億", absAmount / 1_000_000_00.0);
         } else if (absAmount >= 10000) {
@@ -292,29 +344,24 @@ public class MainGameController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/BankPanel.fxml"));
             VBox bankPanel = loader.load();
             BankPanelController bankController = loader.getController();
-
             this.currentBankController = bankController;
+            this.currentBioController = null;
+            this.currentTechController = null;
 
             industryContentArea.getChildren().clear();
             industryContentArea.getChildren().add(bankPanel);
-
             bankController.initData(bankSystem, this);
 
             List<bank_LoanRequest> todayRequests = new ArrayList<>();
             todayRequests.add(bank_Customer.createRandomRequest());
-            if (Math.random() > 0.5) {
-                todayRequests.add(bank_Customer.createRandomRequest());
-            }
+            if (Math.random() > 0.5) todayRequests.add(bank_Customer.createRandomRequest());
             bankController.loadRequests(todayRequests);
 
             javafx.application.Platform.runLater(() -> {
-                if (this.currentBankController != null) {
-                    this.currentBankController.updateBankTitle();
-                }
+                if (this.currentBankController != null) this.currentBankController.updateBankTitle();
             });
-
         } catch (Exception e) {
-            System.err.println("❌ 載入 BankPanel.fxml 失敗！請檢查路徑。");
+            System.err.println("❌ 載入 BankPanel.fxml 失敗！");
             e.printStackTrace();
         }
     }
@@ -324,13 +371,23 @@ public class MainGameController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/BioPanel.fxml"));
             VBox bioPanel = loader.load();
             BioPanelController bioController = loader.getController();
-            bioController.initData(bioSystem, this);
+
+            // 💡 記錄當前生技控制器，清空其他產業
+            this.currentBioController = bioController;
             this.currentBankController = null;
+            this.currentTechController = null;
 
             industryContentArea.getChildren().clear();
             industryContentArea.getChildren().add(bioPanel);
+            bioController.initData(bioSystem, this);
+
+            // 💡 立即刷一次標題
+            javafx.application.Platform.runLater(() -> {
+                if (this.currentBioController != null) this.currentBioController.updateBioTitle();
+            });
         } catch (Exception e) {
             System.err.println("❌ 載入 BioPanel.fxml 失敗！");
+            e.printStackTrace();
         }
     }
 
@@ -339,13 +396,23 @@ public class MainGameController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/TechPanel.fxml"));
             VBox techPanel = loader.load();
             TechPanelController techController = loader.getController();
-            techController.initData(techSystem, this);
+
+            // 💡 記錄當前科技控制器，清空其他產業
+            this.currentTechController = techController;
             this.currentBankController = null;
+            this.currentBioController = null;
 
             industryContentArea.getChildren().clear();
             industryContentArea.getChildren().add(techPanel);
+            techController.initData(techSystem, this);
+
+            // 💡 立即刷一次標題
+            javafx.application.Platform.runLater(() -> {
+                if (this.currentTechController != null) this.currentTechController.updateTechTitle();
+            });
         } catch (Exception e) {
             System.err.println("❌ 載入 TechPanel.fxml 失敗！");
+            e.printStackTrace();
         }
     }
 
@@ -354,16 +421,13 @@ public class MainGameController {
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
         alert.setTitle("財務報表");
         alert.setHeaderText("公司歷史資金明細");
-
         javafx.scene.control.ListView<String> listView = new javafx.scene.control.ListView<>();
         List<String> records = playerCompany.getLedger();
 
         if (records == null || records.isEmpty()) {
             listView.getItems().add("目前尚無資金異動紀錄。");
         } else {
-            for (int i = records.size() - 1; i >= 0; i--) {
-                listView.getItems().add(records.get(i));
-            }
+            for (int i = records.size() - 1; i >= 0; i--) listView.getItems().add(records.get(i));
         }
         listView.setPrefSize(400, 300);
         alert.getDialogPane().setContent(listView);
@@ -396,10 +460,8 @@ public class MainGameController {
         lineChart.setLegendVisible(false);
 
         List<StockRecord> history = playerCompany.getStockHistory();
-
         if (history != null && !history.isEmpty()) {
             if (history.size() == 1) {
-                // 💡 修正：使用 XYChart.Series
                 javafx.scene.chart.XYChart.Series<Number, Number> startPoint = new javafx.scene.chart.XYChart.Series<>();
                 startPoint.getData().add(new javafx.scene.chart.XYChart.Data<>(0, history.get(0).getPrice()));
                 lineChart.getData().add(startPoint);
@@ -408,7 +470,6 @@ public class MainGameController {
                     double prevPrice = history.get(i - 1).getPrice();
                     double currPrice = history.get(i).getPrice();
 
-                    // 💡 修正：使用 XYChart.Series
                     javafx.scene.chart.XYChart.Series<Number, Number> segment = new javafx.scene.chart.XYChart.Series<>();
                     javafx.scene.chart.XYChart.Data<Number, Number> d1 = new javafx.scene.chart.XYChart.Data<>(i - 1, prevPrice);
                     javafx.scene.chart.XYChart.Data<Number, Number> d2 = new javafx.scene.chart.XYChart.Data<>(i, currPrice);
@@ -418,12 +479,8 @@ public class MainGameController {
                     lineChart.getData().add(segment);
 
                     String color = (currPrice >= prevPrice) ? "#E74A3B" : "#1CC88A";
-
                     javafx.scene.Node line = segment.getNode().lookup(".chart-series-line");
-                    if (line != null) {
-                        line.setStyle("-fx-stroke: " + color + "; -fx-stroke-width: 3px;");
-                    }
-
+                    if (line != null) line.setStyle("-fx-stroke: " + color + "; -fx-stroke-width: 3px;");
                     if (d1.getNode() != null) d1.getNode().setStyle("-fx-background-color: " + color + ", white;");
                     if (d2.getNode() != null) d2.getNode().setStyle("-fx-background-color: " + color + ", white;");
                 }
@@ -432,6 +489,6 @@ public class MainGameController {
         lineChart.setPrefSize(550, 400);
         alert.getDialogPane().setContent(lineChart);
         alert.showAndWait();
-    }
 
+    }
 }

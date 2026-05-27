@@ -10,11 +10,13 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+
 public class TechPanelController {
 
     @FXML private Label lblYield;
     @FXML private Label lblCost;
     @FXML private VBox partnerListContainer;
+    @FXML private Label lblTechTitle;
 
     private TechSystem techSystem;
     private MainGameController mainController;
@@ -25,6 +27,17 @@ public class TechPanelController {
 
         loadPartnerUI();
         updateStatusLabels();
+        updateTechTitle(); // 💡 新增：初始化時直接刷一次標題名字
+    }
+    /**
+     * 💡 新增：供主控制器動態呼叫，用來即時刷新科技頁面標題中的公司名稱
+     */
+    public void updateTechTitle() {
+        if (mainController != null && mainController.getPlayerCompany() != null && lblTechTitle != null) {
+            String companyName = mainController.getPlayerCompany().getName();
+            // 動態將標題設定為目前玩家創立的公司名稱
+            lblTechTitle.setText("🏢 " + companyName + " - 科技研發主控台");
+        }
     }
 
     // 購買 EDA 授權工具的邏輯
@@ -44,6 +57,7 @@ public class TechPanelController {
             updateStatusLabels();
         }
     }
+
 
     // 動態生成右側的合作夥伴談判清單
     private void loadPartnerUI() {

@@ -13,6 +13,7 @@ public class BioPanelController {
     @FXML private Label lblSuccessBonusStatus;
     @FXML private Label lblBrandStatus;      // 必須與 FXML 的 fx:id 一致
     @FXML private Label lblEfficiencyStatus; // 必須與 FXML 的 fx:id 一致
+    @FXML private Label lblBioTitle;         // 連結 FXML 頂部標題
 
     private BioSystem bioSystem;
     private BioTechTree techTree;
@@ -22,7 +23,9 @@ public class BioPanelController {
         this.bioSystem = bioSystem;
         this.mainController = mainController;
         this.techTree = new BioTechTree(bioSystem);
+
         updateStatusLabels();
+        updateBioTitle(); // 💡 修正：確保一進生科畫面時，立刻刷新頂部公司名稱
     }
 
     // 必須補上這個方法，否則 FXML 的 onAction 會找不到它而崩潰
@@ -81,5 +84,16 @@ public class BioPanelController {
         mainController.getPlayerCompany().spendCash(mainController.getPlayerCompany().getCash());
         mainController.getPlayerCompany().earnCash(bioSystem.getMoney());
         mainController.updateStatusLabels();
+    }
+
+    /**
+     * 💡 修正：真正將自訂名稱同步給 FXML 的 lblBioTitle 元件
+     */
+    public void updateBioTitle() {
+        if (mainController != null && mainController.getPlayerCompany() != null && lblBioTitle != null) {
+            String companyName = mainController.getPlayerCompany().getName();
+            // 真正把名稱塞進去畫面的 Label 裡！
+            lblBioTitle.setText("🧬 " + companyName + " - 生物科技研發中心");
+        }
     }
 }

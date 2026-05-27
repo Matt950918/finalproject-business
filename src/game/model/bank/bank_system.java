@@ -4,8 +4,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * 🏦 中央銀行控制核心 (bank_system.java)
+ * 已全面恢復尊貴的原廠設定，保留核心金庫扣款、利息結算與爆雷呆帳過濾機制
+ */
 public class bank_system implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     // 💰 初始資金 5000 萬
     private double money = 50_000_000;
@@ -31,7 +35,7 @@ public class bank_system implements Serializable {
     }
 
     // ==========================================
-    // 🔄 換日結算 (注意這裡已經改成 List<String> 了！)
+    // 🔄 換日結算 (精準保留你們的呆帳與還清劇本過濾)
     // ==========================================
     public List<String> tick() {
         List<String> dailyReports = new ArrayList<>();

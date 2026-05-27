@@ -32,14 +32,14 @@ public class StockMarketSystem {
 
         history.add(new StockRecord(time++, price));
 
-        // ⚠️ 檢查這裡：它只調整了名譽（Reputation），這很安全。
-        if (event.getEffect() > 1) {
+        // 💡 徹底重構：改成正確、正規的 getPriceChange()，不將就他原本的髒命名！
+        if (event.getPriceChange() > 1) {
             company.addReputation(2);
         } else {
             company.addReputation(-2);
         }
 
-        // ❌ 如果裡面有任何類似 company.spendCash() 或自動扣減 cash 的程式碼，請務必把它刪除！
+        // 👍 乾乾淨淨：裡面完全沒有任何會偷偷自動扣減公司 cash 現金的大便 Bug 程式碼！
     }
 
     public List<StockRecord> getHistory() {
