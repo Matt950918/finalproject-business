@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox alignment="CENTER" spacing="25.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="game.controller.GachaController" prefWidth="650.0" prefHeight="450.0" style="-fx-background-color: #f8f9fc;">
@@ -19,5 +20,9 @@
         <Label fx:id="lblResultDisplay" text="牌卡準備完畢，可抽取機會/命運..." wrapText="true" alignment="CENTER" textAlignment="CENTER" style="-fx-font-size: 15px; -fx-text-fill: #4e73df; -fx-font-weight: bold;"/>
     </VBox>
 
-    <Button fx:id="btnGachaAction" onAction="#handleDraw" text="🎲 抽取機會命運 (花費 $100 萬)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: #2e59d9; -fx-background-radius: 12; -fx-padding: 12 35; -fx-cursor: hand;"/>
+    <VBox alignment="CENTER" spacing="15.0">
+        <Button fx:id="btnGachaAction" onAction="#handleDraw" text="🎲 抽取機會命運 (花費 $100 萬)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: #2e59d9; -fx-background-radius: 12; -fx-padding: 12 35; -fx-cursor: hand;"/>
+
+        <Button onAction="#handleBack" text="🔙 返回公司經營" styleClass="switch-button button-red" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #E74A3B; -fx-background-color: transparent; -fx-border-color: #E74A3B; -fx-border-width: 1; -fx-border-radius: 10; -fx-padding: 8 25; -fx-cursor: hand;"/>
+    </VBox>
 </VBox>

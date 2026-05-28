@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="game.controller.RankingPanelController"
+      spacing="20"
+      alignment="TOP_CENTER"
+      style="-fx-background-color: #F4F6F9; -fx-padding: 30; -fx-background-radius: 15;">
+
+    <VBox alignment="CENTER" spacing="5">
+        <Label text="👑 全球企業風雲榜"
+               style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #4e73df;" />
+        <Label text="即時連線排序全伺服器最頂尖的核心企業"
+               style="-fx-font-size: 13px; -fx-text-fill: #858796;" />
+    </VBox>
+
+    <HBox spacing="15" alignment="CENTER" style="-fx-padding: 10 0;">
+        <Button text="💰 依總資產排行"
+                onAction="#handleShowCashRank"
+                styleClass="switch-button"
+                style="-fx-font-size: 14px; -fx-padding: 8 20;" />
+
+        <Button text="📈 依企業股價排行"
+                onAction="#handleShowStockRank"
+                styleClass="switch-button"
+                style="-fx-font-size: 14px; -fx-padding: 8 20;" />
+    </HBox>
+
+    <ScrollPane fitToWidth="true"
+                hbarPolicy="NEVER"
+                vbarPolicy="AS_NEEDED"
+                style="-fx-background-color: transparent; -fx-background: transparent;"
+                VBox.vgrow="ALWAYS">
+
+        <VBox fx:id="rankContainer"
+              spacing="12"
+              style="-fx-padding: 5;">
+        </VBox>
+    </ScrollPane>
+
+    <Button text="🔙 返回公司經營"
+            onAction="#handleBack"
+            styleClass="switch-button button-red"
+            style="-fx-font-size: 14px; -fx-padding: 8 25; -fx-text-fill: #E74A3B;" />
+
+</VBox>

@@ -11,12 +11,11 @@ import java.util.Random;
 
 /**
  * 🎲 機會命運抽卡系統 (GachaController.java)
- * 精準對齊 FXML 的 #handleDraw 事件名稱，徹底解決載入崩潰 Bug
+ * 精準對齊 FXML 的 #handleDraw 與新增的 #handleBack 事件名稱
  */
 public class GachaController {
 
     // 💡 提示：請確保你的 GachaPanel.fxml 裡面，按鈕的 fx:id 填寫的是 btnGachaAction
-    // 如果你們 FXML 裡按鈕的 fx:id 是別的名字（例如 btnDraw），請把它改成對應的名字
     @FXML private Button btnGachaAction;
     @FXML private Label lblResultDisplay;
 
@@ -62,8 +61,8 @@ public class GachaController {
     }
 
     /**
-     * 🎯 關鍵修正：將方法名稱精準改為 handleDraw！
-     * 完美對齊 GachaPanel.fxml 第 32 行的 onAction="#handleDraw"
+     * 🎯 抽卡核心事件
+     * 完美對齊 GachaPanel.fxml 的 onAction="#handleDraw"
      */
     @FXML
     private void handleDraw(ActionEvent event) {
@@ -110,6 +109,17 @@ public class GachaController {
         refreshGachaUI();
 
         mainController.updateStatusLabels();
+    }
+
+    /**
+     * 🔙 關鍵新增：轉盤頁面的返回鍵事件
+     * 點擊後會通知 MainGameController 安全返回當前經營產業，對齊 FXML 中的 onAction="#handleBack"
+     */
+    @FXML
+    private void handleBack(ActionEvent event) {
+        if (mainController != null) {
+            mainController.handleReturnToGame();
+        }
     }
 
     public static void decrementCooldown() {

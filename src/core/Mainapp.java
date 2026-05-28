@@ -55,6 +55,7 @@ public class Mainapp extends Application {
         backBtn.getStyleClass().add("switch-button");
         backBtn.setStyle("-fx-text-fill: #E74A3B;");
 
+        // 🎯 精準綁定：當點擊不同的按鈕時，會將正確的 IndustryType 列舉型態傳入主遊戲畫面
         bankBtn.setOnAction(e -> enterCompany(IndustryType.BANK));
         techBtn.setOnAction(e -> enterCompany(IndustryType.TECH));
         bioBtn.setOnAction(e -> enterCompany(IndustryType.BIOTECH));
@@ -81,11 +82,13 @@ public class Mainapp extends Application {
             // 💡 讀取取好的公司名稱
             String userCompanyName = globalCompanyName;
 
+            // 取得主畫面的 Controller，並將畫面上選到的產業型態(type)灌入進度控制核心
             MainGameController controller = loader.getController();
             controller.startGame(userCompanyName, type);
 
             primaryStage.setScene(new Scene(root, 900, 650));
         } catch (Exception e) {
+            System.err.println("❌ 載入 MainGame.fxml 或初始化遊戲主畫面失敗！");
             e.printStackTrace();
         }
     }

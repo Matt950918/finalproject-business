@@ -8,62 +8,79 @@ public class PlayerAccount implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final String DATA_FILE = "user_data.dat";
 
-    // 💡 核心修改：將儲存結構改為儲存一個包含密碼與公司名的封裝物件或直接用 Map 巢狀儲存
-    // 這裡示範最快、最不破壞妳們原本架構的做法：用另一個 Map 存 帳號 -> 公司名
-    private static Map<String, String> userPasswords = new HashMap<>();
-    private static Map<String, String> userCompanies = new HashMap<>(); // 💡 新增：綁定帳號與公司名
+    private static Map<String, PlayerData> userRegistry = new HashMap<>();
 
     static {
         loadData();
     }
 
-    // 💡 修改登入方法：登入成功時，回傳該帳號綁定的公司名稱（若無則回傳預設值）
-    public static String loginAndGetCompany(String username, String password) {
-        if (userPasswords.containsKey(username) && userPasswords.get(username).equals(password)) {
-            // 抓取綁定的公司名稱，如果舊帳號沒有，就給預設值 "遠東集團"
-            return userCompanies.getOrDefault(username, "遠東集團");
-        }
-        return null; // 登入失敗
+    /**
+     * 🔓 專門提供給排行榜系統（RankingSystem）的公開數據接口
+     */
+    public static Map<String, PlayerData> getUserRegistry() {
+        return userRegistry;
     }
 
-    // 💡 修改註冊方法：讓玩家在註冊時就把公司名稱綁定進去
+    public static PlayerData loginAndGetProgress(String username, String password) {
+        if (userRegistry.containsKey(username)) {
+            PlayerData data = userRegistry.get(username);
+            if (data != null && data.getPassword().equals(password)) {
+                return data;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 📝 新增玩家註冊（已修正：拒絕在註冊時塞入預設 BANK 公司）
+     */
     public static boolean register(String username, String password, String companyName) {
-        if (userPasswords.containsKey(username) || username.trim().isEmpty() || password.trim().isEmpty()) {
+        if (userRegistry.containsKey(username) || username.trim().isEmpty() || password.trim().isEmpty()) {
             return false;
         }
-        userPasswords.put(username, password);
 
-        // 如果註冊時沒填公司名，就給預設值
-        String finalCompName = (companyName == null || companyName.trim().isEmpty()) ? "遠東集團" : companyName.trim();
-        userCompanies.put(username, finalCompName);
+        // 🆕 建立純淨的玩家帳號物件，此時內部 company 必須為 null！
+        PlayerData newProgress = new PlayerData(username, password);
 
-        saveData();
+        userRegistry.put(username, newProgress);
+        saveData(); // 儲存乾淨的空帳號
+        System.out.println("✅ [系統註冊] 成功創立純淨帳號: " + username + "，等待玩家選擇產業。");
         return true;
     }
 
-    // 💾 以下為資料讀寫讀取（確保 userCompanies 也有被一起序列化存檔）
+    public static void saveProgress(PlayerData currentData) {
+        if (currentData != null && currentData.getUsername() != null) {
+            userRegistry.put(currentData.getUsername(), currentData);
+            saveData();
+            System.out.println("💾 [系統儲存] 帳號 " + currentData.getUsername() + " 的進度已成功寫入檔案。");
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private static void loadData() {
         File file = new File(DATA_FILE);
         if (!file.exists()) return;
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            userPasswords = (Map<String, String>) ois.readObject();
-            // 💡 讀取公司名稱綁定資料
-            try {
-                userCompanies = (Map<String, String>) ois.readObject();
-            } catch (Exception e) {
-                userCompanies = new HashMap<>(); // 隊友舊的存檔可能沒有，補空防錯
+            Object savedData = ois.readObject();
+            if (savedData instanceof Map) {
+                Map<?, ?> tempMap = (Map<?, ?>) savedData;
+                if (!tempMap.isEmpty() && tempMap.values().iterator().next() instanceof String) {
+                    System.err.println("⚠️ 偵測到舊版本存檔格式，正在自動重置...");
+                    userRegistry = new HashMap<>();
+                } else {
+                    userRegistry = (Map<String, PlayerData>) savedData;
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            userRegistry = new HashMap<>();
         }
     }
 
     private static void saveData() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
-            oos.writeObject(userPasswords);
-            oos.writeObject(userCompanies); // 💡 寫入公司名稱綁定資料
+            oos.writeObject(userRegistry);
         } catch (Exception e) {
+            System.err.println("❌ 寫入存檔失敗！");
             e.printStackTrace();
         }
     }
