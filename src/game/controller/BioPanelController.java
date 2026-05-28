@@ -14,23 +14,30 @@ public class BioPanelController {
     // 🏷️ FXML 元件綁定
     // ==========================================
     @FXML private Label lblBioTitle;
-    @FXML private Label lblRnDStatus;
-    @FXML private Label lblSuccessBonusStatus;
-    @FXML private Label lblBrandStatus;
-    @FXML private Label lblEfficiencyStatus; // 顯示全局基礎刷新率
+    @FXML private Label lblRnDStatus;           // 用來顯示科技一：研發能力等級
+    @FXML private Label lblSuccessBonusStatus;   // 用來顯示科技三：生產開銷優化折讓
+    @FXML private Label lblBrandStatus;          // 用來顯示科技二：品牌價值
+    @FXML private Label lblEfficiencyStatus;     // 廠房動態標籤（正常 / 遭查封）
 
-    // 藥物組件
+    // 藥物組件：預防藥
     @FXML private Label lblCostPreventive;
     @FXML private Label lblStatusPreventive;
     @FXML private Button btnResearchPreventive;
 
+    // 藥物組件：感冒藥
     @FXML private Label lblCostCold;
     @FXML private Label lblStatusCold;
     @FXML private Button btnResearchCold;
 
+    // 藥物組件：特效藥
     @FXML private Label lblCostSpecial;
     @FXML private Label lblStatusSpecial;
     @FXML private Button btnResearchSpecial;
+
+    // 🎯 新增：管制毒品 FXML 元件
+    @FXML private Label lblCostNarcotic;
+    @FXML private Label lblStatusNarcotic;
+    @FXML private Button btnResearchNarcotic;
 
     private BioSystem bioSystem;
     private BioTechTree techTree;
@@ -39,20 +46,26 @@ public class BioPanelController {
     private Drug preventiveDrug;
     private Drug coldDrug;
     private Drug specialDrug;
+    private Drug narcoticDrug; // 🎯 新增：管制毒品實體物件
 
     public void initData(BioSystem bioSystem, MainGameController mainController) {
         this.bioSystem = bioSystem;
         this.mainController = mainController;
         this.techTree = new BioTechTree(bioSystem);
 
+        // 傳入 7 個參數：名稱、枚舉、成功率、成本、售價、解盲報酬倍率、基礎工期天數
         if (preventiveDrug == null) {
-            preventiveDrug = new Drug("廣效型流感疫苗", Drug.DrugType.PREVENTIVE, 0.70, 1000000, 2500000);
+            preventiveDrug = new Drug("廣效型流感疫苗", Drug.DrugType.PREVENTIVE, 0.70, 1000000, 2500000, 1.25, 2);
         }
         if (coldDrug == null) {
-            coldDrug = new Drug("高效速效感冒膠囊", Drug.DrugType.COLD, 0.85, 500000, 1200000);
+            coldDrug = new Drug("高效速效感冒膠囊", Drug.DrugType.COLD, 0.50, 500000, 1200000, 1.50, 4);
         }
         if (specialDrug == null) {
-            specialDrug = new Drug("次世代抗癌特效藥", Drug.DrugType.SPECIAL, 0.40, 5000000, 15000000);
+            specialDrug = new Drug("次世代抗癌特效藥", Drug.DrugType.SPECIAL, 0.20, 5000000, 15000000, 2.00, 7);
+        }
+        // 🎯 新增：初始化管制毒品（2% 超低成功率、高暴利、基礎 12 天工期）
+        if (narcoticDrug == null) {
+            narcoticDrug = new Drug("【管制】精神活性毒品", Drug.DrugType.NARCOTIC, 0.02, 15000000, 120000000, 10.00, 12);
         }
 
         syncMainToBio();
@@ -60,24 +73,49 @@ public class BioPanelController {
         updateBioTitle();
     }
 
+    /**
+     * 🌅 每日換日事件處理
+     */
     public void onNextDay() {
         syncMainToBio();
-        if (bioSystem != null) { bioSystem.tick(); }
+
+        // 1. 推進生技系統每日進程 (發放昨日收益、遞減全藥物工期、遞減全廠警方查封天數)
+        if (bioSystem != null) {
+            bioSystem.tick();
+        }
+
+        // 2. 每日換日重置當日研發次數上限 (3/3)
         if (preventiveDrug != null) preventiveDrug.resetDailyCount();
         if (coldDrug != null) coldDrug.resetDailyCount();
         if (specialDrug != null) specialDrug.resetDailyCount();
+        if (narcoticDrug != null) narcoticDrug.resetDailyCount(); // 🎯 新增
+
         syncMoneyToMain();
         updateStatusLabels();
     }
 
-    @FXML private void handleResearchPreventive() { executeResearch(preventiveDrug, btnResearchPreventive, lblStatusPreventive); }
-    @FXML private void handleResearchCold() { executeResearch(coldDrug, btnResearchCold, lblStatusCold); }
-    @FXML private void handleResearchSpecial() { executeResearch(specialDrug, btnResearchSpecial, lblStatusSpecial); }
+    @FXML private void handleResearchPreventive() { executeResearch(preventiveDrug); }
+    @FXML private void handleResearchCold() { executeResearch(coldDrug); }
+    @FXML private void handleResearchSpecial() { executeResearch(specialDrug); }
+    @FXML private void handleResearchNarcotic() { executeResearch(narcoticDrug); } // 🎯 新增
 
     /**
-     * 核心研發控管與限制邏輯（刷新機率動態腰斬版）
+     * 🔬 核心研發控管與限制邏輯（即時判定結果 + 工期鎖定天數版）
      */
-    private void executeResearch(Drug drug, Button button, Label statusLabel) {
+    private void executeResearch(Drug drug) {
+        // 檢查 1：是否整間工廠正因為毒品黑歷史被警方查封勒令停工
+        if (bioSystem.getLockdownTurns() > 0) {
+            showAlert(Alert.AlertType.WARNING, "廠房封鎖", "❌ 廠房正遭勒令停工中！剩餘 " + bioSystem.getLockdownTurns() + " 天解封。");
+            return;
+        }
+
+        // 檢查 2：該特定藥物是否還在研發工期 / 設備調校鎖定中
+        if (!drug.isAvailable()) {
+            showAlert(Alert.AlertType.WARNING, "產線排程中", "❌ 該藥物產線正忙！剩餘工期/設備調校天數: " + drug.getRemainingCooldownDays() + " 天。");
+            return;
+        }
+
+        // 檢查 3：今日研發次數上限
         if (drug.getDailyResearchCount() >= 3) {
             showAlert(Alert.AlertType.WARNING, "研發限制", drug.getName() + " 今日臨床實驗次數已達上限（3/3 次）。");
             return;
@@ -85,56 +123,23 @@ public class BioPanelController {
 
         syncMainToBio();
 
-        double actualCost = drug.getDynamicCost();
+        // 動態成本計算傳入科技樹第三項的「全球成本折讓（costDiscount）」
+        double actualCost = drug.getDynamicCost(bioSystem.getCostDiscount());
         if (mainController.getPlayerCompany().getCash() < actualCost) {
             showAlert(Alert.AlertType.WARNING, "資金不足", "集團資金不足！無法支付臨床實驗費用。");
             return;
         }
 
-        // 🎯 1. 計算本次按下時真正的面板成功率 (不吃腰斬，回歸正常)
-        double currentRate = drug.getBaseSuccessRate()
-                + bioSystem.getSuccessBonus()
-                + (drug.getTotalSuccessCount() * 0.05)
-                - (drug.getDailyResearchCount() * 0.05);
-        currentRate = Math.max(0.0, Math.min(1.0, currentRate)) * 100;
-
-        // 🎯 2. 計算「本次判定時」該藥物實際的刷新機率 (基礎效率 * 藥物目前的刷新乘數)
-        double baseChance = bioSystem.getEfficiency();
-        double currentRefundChance = baseChance * drug.getRefreshRateMultiplier();
-
-        // 🎲 3. 執行研發
+        // 🎲 執行研發核心：扣款、設定工期、當下隨機解盲判定成功失敗、處理毒品炸裂鎖定與天價罰金
         boolean success = bioSystem.researchDrug(drug);
 
-        // ⚡ 4. 依據計算出的「當前刷新率」進行抽獎
-        boolean isRefreshed = Math.random() < currentRefundChance;
-
-        if (isRefreshed) {
-            drug.refundDailyCount(); // 內部會回補次數，並讓該藥物的 refreshRateMultiplier 減半！
-        }
-
-        // 🎯 5. 計算「下一次點擊」將會套用的新刷新率，用來在警告中精準顯示
-        double nextRefundChance = baseChance * drug.getRefreshRateMultiplier();
-
-        // 建立刷新的警示文字
-        String refreshMessage = isRefreshed
-                ? String.format("\n\n⚡ 【過載運轉】：觸發了 %.0f%% 刷新機率！本次研發不消耗今日次數！\n⚠️ 【產線疲勞警告】：因設備過熱，當天該藥物的「次數刷新率」已被腰斬！下次刷新機率降為 %.1f%%！",
-                currentRefundChance * 100, nextRefundChance * 100)
-                : "";
+        String systemMsg = bioSystem.getSystemMessage();
 
         if (success) {
-            bioSystem.sellDrug(drug, 1.0);
-            double brandLevel = bioSystem.getBrandValue() * 10;
-            double multiplier = 1.5 + (0.1 * brandLevel);
-            double estimatedReward = actualCost * multiplier;
-
-            showAlert(Alert.AlertType.INFORMATION, "🎉 研發成功！",
-                    drug.getName() + " 成功上市！(本次成功率: " + String.format("%.0f%%", currentRate) + ")" + refreshMessage + "\n\n" +
-                            "💰 【研發讚助】：明晨入帳: $" + String.format("%,.0f", estimatedReward)
-            );
+            showAlert(Alert.AlertType.INFORMATION, "🎉 研發成功！", systemMsg);
         } else {
-            showAlert(Alert.AlertType.ERROR, "❌ 臨床實驗失敗",
-                    drug.getName() + " 三期數據未達標。(本次成功率: " + String.format("%.0f%%", currentRate) + ")" + refreshMessage
-            );
+            // 如果是毒品失敗，這裡彈出的 systemMsg 會包含警方的突擊 2 倍罰金與全面停工警告
+            showAlert(Alert.AlertType.ERROR, "❌ 臨床實驗失敗", systemMsg);
         }
 
         syncMoneyToMain();
@@ -144,9 +149,32 @@ public class BioPanelController {
     // ==========================================
     // 🌳 技術專利升級事件處理
     // ==========================================
-    @FXML private void handleUpgradeRnD() { syncMainToBio(); if (mainController.getPlayerCompany().getCash() < 3000000) return; bioSystem.deductMoney(3000000); techTree.upgradeRnD(); syncMoneyToMain(); updateStatusLabels(); }
-    @FXML private void handleUpgradeBrand() { syncMainToBio(); if (mainController.getPlayerCompany().getCash() < 2500000) return; bioSystem.deductMoney(2500000); techTree.upgradeBrand(); syncMoneyToMain(); updateStatusLabels(); }
-    @FXML private void handleUpgradeEfficiency() { syncMainToBio(); if (mainController.getPlayerCompany().getCash() < 2000000) return; bioSystem.deductMoney(2000000); techTree.upgradeEfficiency(); syncMoneyToMain(); updateStatusLabels(); }
+    @FXML private void handleUpgradeRnD() {
+        syncMainToBio();
+        if (mainController.getPlayerCompany().getCash() < 3000000) return;
+        bioSystem.deductMoney(3000000);
+        techTree.upgradeRnD();
+        syncMoneyToMain();
+        updateStatusLabels();
+    }
+
+    @FXML private void handleUpgradeBrand() {
+        syncMainToBio();
+        if (mainController.getPlayerCompany().getCash() < 2500000) return;
+        bioSystem.deductMoney(2500000);
+        techTree.upgradeBrand();
+        syncMoneyToMain();
+        updateStatusLabels();
+    }
+
+    @FXML private void handleUpgradeEfficiency() {
+        syncMainToBio();
+        if (mainController.getPlayerCompany().getCash() < 2000000) return;
+        bioSystem.deductMoney(2000000);
+        techTree.upgradeEfficiency();
+        syncMoneyToMain();
+        updateStatusLabels();
+    }
 
     // ==========================================
     // 🔄 UI 狀態刷新
@@ -154,66 +182,90 @@ public class BioPanelController {
     public void updateStatusLabels() {
         if (bioSystem == null) return;
 
-        lblSuccessBonusStatus.setText("成功率加成: " + String.format("+%.0f%%", bioSystem.getSuccessBonus() * 100));
-        lblBrandStatus.setText("品牌: " + String.format("%.1f", bioSystem.getBrandValue() * 100));
+        // 頂部科技樹狀態文字刷新
+        lblRnDStatus.setText(String.format("🔬 研發縮時等級: LV.%.0f (工期減免 %.0f%%)", bioSystem.getRndLevel(), bioSystem.getRndLevel() * 5));
+        lblSuccessBonusStatus.setText(String.format("💰 生產開銷折讓: -%.0f%%", bioSystem.getCostDiscount() * 100));
+        lblBrandStatus.setText(String.format("📢 品牌營銷溢價: +%.0f%%", bioSystem.getBrandValue() * 100));
 
-        // 顯示科技樹升級上去的「基礎刷新率」
-        lblEfficiencyStatus.setText("基礎刷新率: " + String.format("%.0f%%", bioSystem.getEfficiency() * 100));
-        if (lblRnDStatus != null) {
-            lblRnDStatus.setText("🔬 基礎刷新率: " + String.format("%.0f%%", bioSystem.getEfficiency() * 100));
+        // 廠房狀態：若大於 0 天則紅字警告全面停工
+        if (lblEfficiencyStatus != null) {
+            if (bioSystem.getLockdownTurns() > 0) {
+                lblEfficiencyStatus.setText(String.format("廠房動態：🚨 遭檢警全面查封停工中！(剩餘 %d 天)", bioSystem.getLockdownTurns()));
+                lblEfficiencyStatus.setStyle("-fx-text-fill: #c0392b; -fx-font-weight: bold;");
+            } else {
+                lblEfficiencyStatus.setText("廠房動態：🟢 運作正常");
+                lblEfficiencyStatus.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+            }
         }
 
+        // 各大藥物排程卡片狀態刷新
         if (preventiveDrug != null) {
-            lblCostPreventive.setText("研發成本: $" + String.format("%,.0f", preventiveDrug.getDynamicCost() / 10000) + " 萬");
+            lblCostPreventive.setText("研發成本: $" + String.format("%,.0f", preventiveDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(preventiveDrug, btnResearchPreventive, lblStatusPreventive);
         }
         if (coldDrug != null) {
-            lblCostCold.setText("研發成本: $" + String.format("%,.0f", coldDrug.getDynamicCost() / 10000) + " 萬");
+            lblCostCold.setText("研發成本: $" + String.format("%,.0f", coldDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(coldDrug, btnResearchCold, lblStatusCold);
         }
         if (specialDrug != null) {
-            lblCostSpecial.setText("研發成本: $" + String.format("%,.0f", specialDrug.getDynamicCost() / 10000) + " 萬");
+            lblCostSpecial.setText("研發成本: $" + String.format("%,.0f", specialDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(specialDrug, btnResearchSpecial, lblStatusSpecial);
+        }
+        // 🎯 新增：毒品前端卡片狀態刷新
+        if (narcoticDrug != null) {
+            lblCostNarcotic.setText("研發成本: $" + String.format("%,.0f", narcoticDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
+            updateDrugRowUI(narcoticDrug, btnResearchNarcotic, lblStatusNarcotic);
         }
     }
 
     /**
-     * 更新卡片 UI (包含動態顯示當前被腰斬後的刷新機率)
+     * 更新卡片 UI (呈現工期倒數天數鎖定狀態)
      */
     private void updateDrugRowUI(Drug drug, Button button, Label statusLabel) {
         if (drug == null || button == null || statusLabel == null) return;
 
+        // 狀況 A：如果目前整間廠房被警方查封 (全面連坐停工)
+        if (bioSystem.getLockdownTurns() > 0) {
+            statusLabel.setText("🚨 廠房封鎖中！暫停一切常規運作");
+            statusLabel.setStyle("-fx-text-fill: #c0392b; -fx-font-weight: bold;");
+            button.setDisable(true);
+            button.setText("暫停開工");
+            return;
+        }
+
+        // 狀況 B：如果該特定藥物正在工期鎖定中（還沒冷卻完畢）
+        if (!drug.isAvailable()) {
+            statusLabel.setText("🧪 產線工期鎖定中... 剩餘 " + drug.getRemainingCooldownDays() + " 天");
+            statusLabel.setStyle("-fx-text-fill: #9b59b6; -fx-font-weight: bold;");
+            button.setDisable(true);
+            button.setText("研發排程中");
+            return;
+        }
+
         int remaining = 3 - drug.getDailyResearchCount();
 
-        double nextRate = drug.getBaseSuccessRate()
-                + bioSystem.getSuccessBonus()
-                + (drug.getTotalSuccessCount() * 0.05)
-                - (drug.getDailyResearchCount() * 0.05);
-        nextRate = Math.max(0.0, Math.min(1.0, nextRate)) * 100;
-
-        // 🎯 計算目前這款藥物當下真正的動態刷新率
-        double currentDrugRefreshChance = bioSystem.getEfficiency() * drug.getRefreshRateMultiplier() * 100;
-
+        // 狀況 C：如果當天點擊次數滿了
         if (remaining <= 0) {
             statusLabel.setText("今日次數已耗盡 (0/3)");
             statusLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold;");
             button.setDisable(true);
             button.setText("明日請早");
         } else {
-            String bonusTag = drug.getTotalSuccessCount() > 0 ? " (已享紅利)" : "";
-
-            // 💡 修正：在面板上清晰印出這款藥物目前的【動態刷新率】，讓玩家一眼看出被腰斬了
-            String refreshTag = String.format(" [當前刷新率: %.0f%%]", currentDrugRefreshChance);
-
-            statusLabel.setText(String.format("今日剩餘: %d 次 | 下次機率: %.0f%%%s\n%s",
-                    remaining, nextRate, bonusTag, refreshTag));
+            // 狀況 D：完全正常可點擊狀態
+            String statusText = String.format("今日剩餘次數: %d/3 次", remaining);
+            statusLabel.setText(statusText);
 
             if (drug.isDiscovered()) {
                 statusLabel.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
                 button.setText("再次研發上市 ➔");
             } else {
-                statusLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;");
-                button.setText("啟動臨床實驗 ➔");
+                if (drug.getType() == Drug.DrugType.NARCOTIC) {
+                    statusLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;");
+                    button.setText("啟動秘密研發 ➔");
+                } else {
+                    statusLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;");
+                    button.setText("啟動臨床實驗 ➔");
+                }
             }
             button.setDisable(false);
         }

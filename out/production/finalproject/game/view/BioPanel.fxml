@@ -13,21 +13,23 @@
     <HBox alignment="CENTER_LEFT" style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-padding: 15 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 5);">
         <VBox spacing="5">
             <Label fx:id="lblBioTitle" text="🧬 遠東生物科技研發中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-            <Label fx:id="lblMoney" text="集團分配資金: $50,000,000" style="-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;" />
+            <Label fx:id="lblEfficiencyStatus" text="廠房動態：🟢 運作正常" style="-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;" />
         </VBox>
         <Region HBox.hgrow="ALWAYS" />
 
         <HBox spacing="10" alignment="CENTER">
-            <Label fx:id="lblSuccessBonusStatus" text="🎯 成功率加成：+0%" style="-fx-background-color: #c4dcfa; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
-            <Label fx:id="lblBrandStatus" text="📢 品牌：0" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
-            <Label fx:id="lblEfficiencyStatus" text="⚙️ 成本減免：0%" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
+            <Label fx:id="lblRnDStatus" text="🔬 研發縮時：LV.0" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
+            <Label fx:id="lblBrandStatus" text="📢 品牌溢價：+0%" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
+            <Label fx:id="lblSuccessBonusStatus" text="💰 開銷折讓：-0%" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
         </HBox>
     </HBox>
 
     <HBox spacing="25" VBox.vgrow="ALWAYS">
+
         <VBox spacing="20" HBox.hgrow="ALWAYS" style="-fx-background-color: #f7f7f7; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #ebe9f4; -fx-border-width: 1.5;">
-            <Label text="🧪 核心藥物臨床實驗進度" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+            <Label text="🧪 核心藥物臨床實驗與排程進度" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
             <Separator />
+
             <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
                 <VBox spacing="15" style="-fx-background-color: transparent;">
 
@@ -37,9 +39,9 @@
                             <Region HBox.hgrow="ALWAYS" />
                             <Label fx:id="lblCostPreventive" text="研發成本: $100 萬" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
                         </HBox>
-                        <Label text="基礎研發成功率：70%。屬於低風險、穩健項目，主要用於建立基層醫療防線與穩定營收。" style="-fx-text-fill: #666666; -fx-font-size: 14px;" wrapText="true" />
+                        <Label text="基礎研發工期：2 天。屬於低風險項目，主要用於建立基層醫療防線與穩定營收。點擊解盲後產線會進入設備調校排程。" style="-fx-text-fill: #666666; -fx-font-size: 14px;" wrapText="true" />
                         <HBox alignment="CENTER_RIGHT" spacing="15">
-                            <Label fx:id="lblStatusPreventive" text="狀態：未研發" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" />
+                            <Label fx:id="lblStatusPreventive" text="今日剩餘次數: 3/3 次" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" />
                             <Button fx:id="btnResearchPreventive" text="啟動臨床實驗 ➔" onAction="#handleResearchPreventive" style="-fx-background-color: #c4dcfa; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 16;" />
                         </HBox>
                     </VBox>
@@ -50,9 +52,9 @@
                             <Region HBox.hgrow="ALWAYS" />
                             <Label fx:id="lblCostCold" text="研發成本: $50 萬" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
                         </HBox>
-                        <Label text="基礎研發成功率：85%。高研發率、週轉快的常備民生藥物，普及率高，適合初期快速回籠資金。" style="-fx-text-fill: #666666; -fx-font-size: 14px;" wrapText="true" />
+                        <Label text="基礎研發工期：4 天。高普及率的常備民生藥物，週轉快。研發後產線將進入短暫鎖定，可透過科技投資永久縮時。" style="-fx-text-fill: #666666; -fx-font-size: 14px;" wrapText="true" />
                         <HBox alignment="CENTER_RIGHT" spacing="15">
-                            <Label fx:id="lblStatusCold" text="狀態：未研發" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" />
+                            <Label fx:id="lblStatusCold" text="今日剩餘次數: 3/3 次" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" />
                             <Button fx:id="btnResearchCold" text="啟動臨床實驗 ➔" onAction="#handleResearchCold" style="-fx-background-color: #c4dcfa; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 16;" />
                         </HBox>
                     </VBox>
@@ -63,10 +65,23 @@
                             <Region HBox.hgrow="ALWAYS" />
                             <Label fx:id="lblCostSpecial" text="研發成本: $500 萬" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
                         </HBox>
-                        <Label text="基礎研發成功率：40%。屬於高風險、高報酬項目，一旦三期臨床通過成功上市，將能為集團開創龐大專利變現流。" style="-fx-text-fill: #666666; -fx-font-size: 14px;" wrapText="true" />
+                        <Label text="基礎研發工期：7 天。高風險項目。一旦三期解盲通過成功上市，將能開創極龐大的財團營收與專利變現流。" style="-fx-text-fill: #666666; -fx-font-size: 14px;" wrapText="true" />
                         <HBox alignment="CENTER_RIGHT" spacing="15">
-                            <Label fx:id="lblStatusSpecial" text="狀態：未研發" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" />
+                            <Label fx:id="lblStatusSpecial" text="今日剩餘次數: 3/3 次" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" />
                             <Button fx:id="btnResearchSpecial" text="啟動臨床實驗 ➔" onAction="#handleResearchSpecial" style="-fx-background-color: #c4dcfa; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 16;" />
+                        </HBox>
+                    </VBox>
+
+                    <VBox spacing="12" style="-fx-background-color: #fcebe9; -fx-background-radius: 12; -fx-padding: 18; -fx-border-color: #f5b7b1; -fx-border-width: 1; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="💀 【管制】精神活性毒品 (Narcotic)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #c0392b;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label fx:id="lblCostNarcotic" text="研發成本: $1500 萬" style="-fx-background-color: #f9d5d2; -fx-text-fill: #922b21; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
+                        </HBox>
+                        <Label text="基礎研發成功率：2%。基礎工期：12 天。地下黑市暴利項目，利潤高達十倍！但注意：若失敗將有 90% 機率導致整間廠房被司法查封、完全無法營運！" style="-fx-text-fill: #7b241c; -fx-font-size: 14px;" wrapText="true" />
+                        <HBox alignment="CENTER_RIGHT" spacing="15">
+                            <Label fx:id="lblStatusNarcotic" text="今日剩餘次數: 3/3 次" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" />
+                            <Button fx:id="btnResearchNarcotic" text="啟動秘密研發 ➔" onAction="#handleResearchNarcotic" style="-fx-background-color: #f1948a; -fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 16;" />
                         </HBox>
                     </VBox>
 
@@ -77,12 +92,16 @@
         <VBox spacing="18" prefWidth="380" style="-fx-background-color: #f7f7f7; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #ebe9f4; -fx-border-width: 1.5;">
             <Label text="🌳 核心技術專利權升級" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
             <Separator />
-            <Label text="透過挹注資本升級實驗室設備，能永久改良後續所有新藥的臨床體質與生產收益。" style="-fx-text-fill: #777777; -fx-font-size: 13px;" wrapText="true" />
+            <Label text="透過挹注資本升級實驗室設備或優化生產製程，永久改良全藥產線的排程天數與資金開銷。" style="-fx-text-fill: #777777; -fx-font-size: 13px;" wrapText="true" />
+
             <VBox spacing="12" VBox.vgrow="ALWAYS" alignment="TOP_CENTER">
-                <Button text="🔬 升級 AI 模擬設備 (+5% 成功率)" onAction="#handleUpgradeRnD" maxWidth="1.7976931348623157E308" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
-                <Button text="📢 投放跨國醫學期刊 (+10% 品牌權重)" onAction="#handleUpgradeBrand" maxWidth="1.7976931348623157E308" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
-                <Button text="⚙️ 改良低溫製程技術 (-5% 研發成本)" onAction="#handleUpgradeEfficiency" maxWidth="1.7976931348623157E308" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+                <Button text="🔬 升級自動化排程 (工期縮減 5%)" onAction="#handleUpgradeRnD" maxWidth="1.7976931348623157E308" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+
+                <Button text="📢 投放跨國醫學期刊 (+10% 品牌溢價)" onAction="#handleUpgradeBrand" maxWidth="1.7976931348623157E308" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+
+                <Button text="⚙️ 改良低溫製程技術 (-5% 研發開銷)" onAction="#handleUpgradeEfficiency" maxWidth="1.7976931348623157E308" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
             </VBox>
         </VBox>
+
     </HBox>
 </VBox>

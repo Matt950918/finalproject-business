@@ -104,8 +104,7 @@ public class MainGameController {
     }
 
     /**
-     * 🔙 關鍵新增：提供給子面板（排行榜、抽卡）呼叫的返回鍵接口
-     * 自動偵測玩家目前的產業，並完美切換回對應的主面板
+     * 🔙 提供給子面板呼叫的返回鍵接口
      */
     @FXML
     public void handleReturnToGame() {
@@ -143,11 +142,14 @@ public class MainGameController {
         }
     }
 
+    /**
+     * 🎮 啟動遊戲核心邏輯
+     */
     public void startGame(String customName, IndustryType selectedIndustry) {
         PlayerData sessionData = MainMenuController.activeProgress;
 
         if (sessionData != null && sessionData.getCompany() != null && sessionData.getDay() > 0) {
-            System.out.println("📂 [進度載入] 偵測到歷史存檔，還原產業: " + sessionData.getCompany().getIndustry());
+            System.out.println("📂 [進度載入] 還原產業: " + sessionData.getCompany().getIndustry());
             this.playerCompany = sessionData.getCompany();
             this.currentDay = sessionData.getDay() - 1;
 
@@ -155,7 +157,7 @@ public class MainGameController {
             else if (playerCompany.getIndustry() == IndustryType.BIOTECH) bioSystem.setMoney(playerCompany.getCash());
             else if (playerCompany.getIndustry() == IndustryType.TECH) techSystem.setMoney(playerCompany.getCash());
         } else {
-            System.out.println("🏢 [進度建立] 偵測為全新帳號/新局，完美指定選擇產業: " + selectedIndustry);
+            System.out.println("🏢 [進度建立] 完美指定選擇產業: " + selectedIndustry);
             playerCompany = new Company(customName, selectedIndustry);
             playerCompany.getLedger().clear();
             playerCompany.recordTransaction("🏢 [系統] " + playerCompany.getName() + " 正式創立！");
@@ -171,8 +173,8 @@ public class MainGameController {
             }
         }
 
-        btnCash.setOnAction(e -> showLedger());
-        btnStockPrice.setOnAction(e -> showStockChart());
+        // 💡 提示：此處已不允許任何 setOnAction 覆蓋事件，全權由 FXML 接管路由。
+        System.out.println("🔥 [初始化完成] 當前核心公司物件 Hash: " + System.identityHashCode(playerCompany));
 
         NewsDatabase.resetDatabase();
         if (newsOverlay != null) newsOverlay.setVisible(false);
@@ -205,6 +207,9 @@ public class MainGameController {
         timeline.setCycleCount(Timeline.INDEFINITE);
     }
 
+    /**
+     * 🌅 每日換日核心調度邏輯
+     */
     private void startNewDay() {
         currentDay++;
         if (playerCompany != null) {
@@ -215,6 +220,10 @@ public class MainGameController {
 
         IndustryType activeType = playerCompany.getIndustry();
         System.out.println("🌅 第 " + currentDay + " 天開始。當前核心產業判定為: " + activeType);
+
+        if (activeType == IndustryType.BANK) bankSystem.setMoney(playerCompany.getCash());
+        else if (activeType == IndustryType.BIOTECH) bioSystem.setMoney(playerCompany.getCash());
+        else if (activeType == IndustryType.TECH) techSystem.setMoney(playerCompany.getCash());
 
         if (activeType == IndustryType.BANK) {
             double beforeMoney = bankSystem.getMoney();
@@ -231,11 +240,13 @@ public class MainGameController {
             if (!bankReports.isEmpty()) {
                 showBankReportPopup(bankReports);
             }
-        } else if (activeType == IndustryType.BIOTECH) {
+        }
+        else if (activeType == IndustryType.BIOTECH) {
             bioSystem.tick();
             playerCompany.setCash(bioSystem.getMoney());
             loadBioPanel();
-        } else if (activeType == IndustryType.TECH) {
+        }
+        else if (activeType == IndustryType.TECH) {
             techSystem.tick();
             playerCompany.setCash(techSystem.getMoney());
             loadTechPanel();
@@ -372,9 +383,9 @@ public class MainGameController {
         MarketEvent resultEvent = (selectedOption != null) ? selectedOption.execute(playerCompany) : null;
         playerCompany.updateStockPrice(currentDay, resultEvent);
 
-        if (playerCompany.getIndustry() == IndustryType.BANK) bankSystem.setMoney(playerCompany.getCash());
-        else if (playerCompany.getIndustry() == IndustryType.BIOTECH) bioSystem.setMoney(playerCompany.getCash());
-        else if (playerCompany.getIndustry() == IndustryType.TECH) techSystem.setMoney(playerCompany.getCash());
+        if (playerCompany.getIndustry() == IndustryType.BANK) playerCompany.setCash(bankSystem.getMoney());
+        else if (playerCompany.getIndustry() == IndustryType.BIOTECH) playerCompany.setCash(bioSystem.getMoney());
+        else if (playerCompany.getIndustry() == IndustryType.TECH) playerCompany.setCash(techSystem.getMoney());
 
         updateStatusLabels();
         String msg = (selectedOption == null) ? "今日營業時間結束，市場結算完畢。" : ((resultEvent != null) ? resultEvent.getName() : "公司維持穩定經營，市場無重大消息。");
@@ -423,20 +434,90 @@ public class MainGameController {
         return (isNegative ? "-" : "") + formattedStr;
     }
 
+    /**
+     * 📊 秀出公司歷史資金明細（含保險防空補登與即時 Console 監控機制）
+     */
     @FXML
     private void showLedger() {
+        if (playerCompany == null) {
+            System.err.println("❌ [Ledger Error] 點擊帳本時 playerCompany 為 null！");
+            return;
+        }
+
+        System.out.println("📊 [Ledger Debug] 目前物件 Hash: " + System.identityHashCode(playerCompany)
+                + " | 當前天數: " + currentDay + " | 真實紀錄筆數: " + playerCompany.getLedger().size());
+
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-        alert.setTitle("財務報表");
-        alert.setHeaderText("公司歷史資金明細");
+        alert.setTitle("財務報表系統");
+        alert.setHeaderText("📊 " + playerCompany.getName() + " - 核心資金異動歷史明細");
+
         javafx.scene.control.ListView<String> listView = new javafx.scene.control.ListView<>();
+
+        // 🎯 毒品突發停工懲罰之明細即時自動登錄機制
+        if (playerCompany.getIndustry() == IndustryType.BIOTECH && bioSystem.getLockdownTurns() > 0) {
+            String lastLog = playerCompany.getLedger().isEmpty() ? "" : playerCompany.getLedger().get(playerCompany.getLedger().size() - 1);
+            if (!lastLog.contains("🚨 [突發制裁]")) {
+                double penaltyFine = bioSystem.getDrugs().stream()
+                        .filter(d -> d.getType() == game.model.bio.Drug.DrugType.NARCOTIC)
+                        .findFirst().map(d -> d.getDynamicCost(bioSystem.getCostDiscount()) * 2).orElse(30000000.0);
+                playerCompany.recordTransaction(String.format("↳ [第 %d 天] 🚨 [突發制裁] 地下研發遭檢警查禁，強制執行 2 倍行政罰鍰：-$%,.0f 萬", currentDay, penaltyFine / 10000));
+            }
+        }
+
         List<String> records = playerCompany.getLedger();
-        if (records == null || records.isEmpty()) listView.getItems().add("目前尚無資金異動紀錄。");
-        else { for (int i = records.size() - 1; i >= 0; i--) listView.getItems().add(records.get(i)); }
-        listView.setPrefSize(400, 300);
+
+        // 🌟【防空保險機制】：如果發現記憶體內的陣列是空的，當場動態幫玩家補登一筆當前的經營現況！
+        if (records == null || records.isEmpty()) {
+            System.out.println("⚠️ [Ledger Warning] 偵測到 ledger 為空，啟動防空安全補登機制！");
+            listView.getItems().add(String.format("🏢 [經營現況] 公司名：%s (記憶體異動紀錄重置中)", playerCompany.getName()));
+            listView.getItems().add(String.format("↳ [第 %d 天] 💰 目前留存結餘現金額：$%s", currentDay, formatMoney(playerCompany.getCash())));
+            listView.getItems().add("ℹ️ 提示：新一輪投資獲利或研發扣款發生時，帳單將會自動接續更新。");
+        } else {
+            // 🌟 倒序排列優化：最新的帳務記錄永遠排在最上面
+            for (int i = records.size() - 1; i >= 0; i--) {
+                listView.getItems().add(records.get(i));
+            }
+        }
+
+        // 🌟 介面 CSS 精美化
+        listView.setPrefSize(550, 380);
+        listView.setStyle(
+                "-fx-font-family: 'Microsoft JhengHei', 'Segoe UI'; " +
+                        "-fx-font-size: 13px; " +
+                        "-fx-background-color: #f8f9fc; " +
+                        "-fx-border-color: #eaecf4; " +
+                        "-fx-border-radius: 5px;"
+        );
+
+        // 🌟 動態高亮色彩工廠
+        listView.setCellFactory(lv -> new javafx.scene.control.ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle(null);
+                } else {
+                    setText(item);
+                    if (item.contains("+$") || item.contains("獲利") || item.contains("到帳")) {
+                        setStyle("-fx-text-fill: #1cc88a; -fx-font-weight: bold; -fx-padding: 6px;");
+                    } else if (item.contains("-$") || item.contains("❌") || item.contains("🚨") || item.contains("罰鍰") || item.contains("支出")) {
+                        setStyle("-fx-text-fill: #e74a3b; -fx-font-weight: bold; -fx-padding: 6px;");
+                    } else {
+                        setStyle("-fx-text-fill: #4e73df; -fx-padding: 6px;");
+                    }
+                }
+            }
+        });
+
         alert.getDialogPane().setContent(listView);
+        alert.getDialogPane().setPrefWidth(580);
         alert.showAndWait();
     }
 
+    /**
+     * 📊 秀出公司歷史股價走勢圖 (XYChart 內部類別符號完美版)
+     */
     @FXML
     private void showStockChart() {
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
@@ -458,11 +539,15 @@ public class MainGameController {
                 for (int i = 1; i < history.size(); i++) {
                     double prevPrice = history.get(i - 1).getPrice();
                     double currPrice = history.get(i).getPrice();
+
                     javafx.scene.chart.XYChart.Series<Number, Number> segment = new javafx.scene.chart.XYChart.Series<>();
                     javafx.scene.chart.XYChart.Data<Number, Number> d1 = new javafx.scene.chart.XYChart.Data<>(i - 1, prevPrice);
                     javafx.scene.chart.XYChart.Data<Number, Number> d2 = new javafx.scene.chart.XYChart.Data<>(i, currPrice);
-                    segment.getData().add(d1); segment.getData().add(d2);
+
+                    segment.getData().add(d1);
+                    segment.getData().add(d2);
                     lineChart.getData().add(segment);
+
                     String color = (currPrice >= prevPrice) ? "#E74A3B" : "#1CC88A";
                     javafx.scene.Node line = segment.getNode().lookup(".chart-series-line");
                     if (line != null) line.setStyle("-fx-stroke: " + color + "; -fx-stroke-width: 3px;");
