@@ -13,6 +13,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,8 @@ public class MainGameController {
     @FXML private Button btnGacha;
     @FXML private Button btnRanking;
 
+    @FXML private Circle gachaBadge; // 🔴 注入主畫面的小紅點
+
     // 彈窗相關元件
     @FXML private VBox resultOverlay;
     @FXML private Label lblSettleReason;
@@ -38,6 +41,10 @@ public class MainGameController {
     @FXML private Label lblNewsTitle;
     @FXML private VBox optionsBox;
     @FXML private StackPane industryContentArea;
+
+    // 🎲 全新機會命運狀態機變數
+    private boolean gachaUsedYesterday = false;  // 追蹤昨天有沒有抽過卡
+    private boolean gachaAvailableToday = false; // 追蹤今天有沒有隨機刷出契機
 
     // 底層系統
     private bank_system bankSystem = new bank_system();
@@ -211,7 +218,20 @@ public class MainGameController {
             playerCompany.decrementBuffTurns();
         }
 
-        GachaController.decrementCooldown();
+        // 🎲 替代原本的固定冷卻。實作：純隨機，但不能連續兩天抽卡
+        if (gachaUsedYesterday) {
+            // 如果昨天剛抽過，今天強制關閉契機
+            gachaAvailableToday = false;
+            gachaUsedYesterday = false; // 重置狀態，讓明天可以重新隨機
+            System.out.println("🎲 [機會命運] 由於昨日已抽卡，今日強制進入冷卻。");
+        } else {
+            // 昨天沒抽卡，今天有 50% 的純隨機機率刷出商業契機！
+            gachaAvailableToday = Math.random() < 0.50;
+            System.out.println("🎲 [機會命運] 隨機判定結果：今日契機開啟 = " + gachaAvailableToday);
+        }
+
+        // 🔴 刷新主畫面按鈕右上角的小紅點（純粹通知當前局可抽，玩家沒錢是他自己的事）
+        updateGachaBadge();
 
         IndustryType activeType = playerCompany.getIndustry();
         System.out.println("🌅 第 " + currentDay + " 天開始。當前核心產業判定為: " + activeType);
@@ -472,5 +492,31 @@ public class MainGameController {
         lineChart.setPrefSize(550, 400);
         alert.getDialogPane().setContent(lineChart);
         alert.showAndWait();
+    }
+
+    // ==========================================
+    // 🎲 全新機會命運狀態管理接口
+    // ==========================================
+
+    public boolean isGachaAvailableToday() {
+        return gachaAvailableToday;
+    }
+
+    /**
+     * 當玩家在抽卡頁面實質按下「抽卡」後由 GachaController 呼叫
+     */
+    public void setGachaUsedToday() {
+        this.gachaAvailableToday = false;
+        this.gachaUsedYesterday = true; // 標記今天抽過了（明天換日會強制冷卻）
+        updateGachaBadge();            // 抽完立刻關閉小紅點
+    }
+
+    /**
+     * 統一刷新小紅點可見度（純粹看今天有沒有隨機契機，玩家沒錢是他自己的事！）
+     */
+    public void updateGachaBadge() {
+        if (gachaBadge != null) {
+            gachaBadge.setVisible(gachaAvailableToday);
+        }
     }
 }
