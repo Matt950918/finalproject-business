@@ -13,43 +13,55 @@
     <HBox alignment="CENTER_LEFT" style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-padding: 15 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 5);">
         <VBox spacing="5">
             <Label fx:id="lblTechTitle" text="💻 遠東 IC 設計與硬體供應鏈中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-            <Label text="掌握 EDA 授權、電路架構最佳化與晶圓代工良率" style="-fx-font-size: 14px; -fx-text-fill: #777777;" />
+            <Label text="主導核心晶片微架構研發、談判籌碼與上下游供應鏈分潤" style="-fx-font-size: 14px; -fx-text-fill: #777777;" />
         </VBox>
         <Region HBox.hgrow="ALWAYS" />
         <HBox spacing="10" alignment="CENTER">
-            <Label fx:id="lblYield" text="⚙️ 當前代工良率：75%" style="-fx-background-color: #ebe9f4; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
-            <Label fx:id="lblCost" text="📉 單片晶圓成本：$1200" style="-fx-background-color: #c4dcfa; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
+            <Label fx:id="lblYield" text="⚙️ AI 研究等級：Lv.0" style="-fx-background-color: #ebe9f4; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
+            <Label fx:id="lblCost" text="📉 進行中合約：0 檔" style="-fx-background-color: #c4dcfa; -fx-text-fill: #333333; -fx-padding: 6 12; -fx-background-radius: 15; -fx-font-weight: bold;" />
         </HBox>
     </HBox>
 
     <HBox spacing="25" VBox.vgrow="ALWAYS">
 
-        <VBox spacing="20" HBox.hgrow="ALWAYS" style="-fx-background-color: #f7f7f7; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #ebe9f4; -fx-border-width: 1.5;">
-            <Label text="📐 硬體架構與 EDA 授權管理" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-            <Separator />
-
-            <VBox spacing="15">
-                <VBox spacing="12" style="-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);">
-                    <HBox alignment="CENTER_LEFT">
-                        <Label text="📜 頂級 EDA 軟體企業授權" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-                        <Region HBox.hgrow="ALWAYS" />
-                        <Label text="授權費: $800 萬" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
-                    </HBox>
-                    <Label text="升級電子設計自動化工具，能大幅縮短電路模擬時間，降低 IC 佈局布線 (P&amp;R) 的邏輯錯誤率。" style="-fx-text-fill: #666666; -fx-font-size: 14px;" wrapText="true" />
-                    <HBox alignment="CENTER_RIGHT">
-                        <Button text="💳 支付授權費" onAction="#handleBuyEDA" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 16;" />
-                    </HBox>
-                </VBox>
-            </VBox>
-        </VBox>
-
-        <VBox spacing="18" prefWidth="400" style="-fx-background-color: #f7f7f7; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #ebe9f4; -fx-border-width: 1.5;">
+        <VBox spacing="18" HBox.hgrow="ALWAYS" style="-fx-background-color: #f7f7f7; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #ebe9f4; -fx-border-width: 1.5;">
             <Label text="🤝 供應鏈合約談判桌" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
             <Separator />
 
             <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
                 <VBox fx:id="partnerListContainer" spacing="12" style="-fx-background-color: transparent;" />
             </ScrollPane>
+        </VBox>
+
+        <VBox spacing="20" prefWidth="420" style="-fx-background-color: #f7f7f7; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #ebe9f4; -fx-border-width: 1.5;">
+            <Label text="📐 晶片架構與研發升級管理" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+            <Separator />
+
+            <VBox spacing="15">
+                <VBox spacing="12" style="-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="💻 自研高階晶片設計系統" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label text="研發費: $800 萬" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 12px; -fx-font-weight: bold;" />
+                    </HBox>
+                    <Label text="【商務保底特權】：引進高階電路模擬布線技術。擁有此系統後，若左側商務談判不幸破裂，大廠因無法輕易取代我們，將『拒絕抽單』，合約得以安全保留原價！" style="-fx-text-fill: #666666; -fx-font-size: 13px;" wrapText="true" />
+                    <HBox alignment="CENTER_RIGHT">
+                        <Button fx:id="btnBuyEDA" text="💳 支付開發工具費" onAction="#handleBuyEDA" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 16;" />
+                    </HBox>
+                </VBox>
+
+                <VBox spacing="12" style="-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="🚀 核心 AI 研發實驗室" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label text="費用: 隨等級倍增" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 12px; -fx-font-weight: bold;" />
+                    </HBox>
+                    <Label text="【談判機率加成】：利用 AI 最佳化硬體架構。每升一級，右側談判桌上跟科技巨頭『砍價與抬價的成功率』永久提升 5%，並降低常規供應鏈運營開銷。" style="-fx-text-fill: #666666; -fx-font-size: 13px;" wrapText="true" />
+                    <HBox alignment="CENTER_RIGHT">
+                        <Button fx:id="btnUpgradeAI" text="⚡ 升級 AI 實驗室" onAction="#handleUpgradeAI" style="-fx-background-color: #4E73DF; -fx-text-fill: #FFFFFF; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 16;" />
+                    </HBox>
+                </VBox>
+            </VBox>
         </VBox>
 
     </HBox>

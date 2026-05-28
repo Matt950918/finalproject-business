@@ -9,13 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * 🎲 機會命運抽卡系統 (GachaController.java)
- * 完美同步全新「純隨機、不連續抽卡」機制，全面移除舊版固定冷卻計數器
- */
 public class GachaController {
 
-    // 💡 請確保您的 GachaPanel.fxml 裡面，按鈕的 fx:id 填寫的是 btnGachaAction
     @FXML private Button btnGachaAction;
     @FXML private Label lblResultDisplay;
 
@@ -26,24 +21,17 @@ public class GachaController {
 
     public void initData(MainGameController mainController) {
         this.mainController = mainController;
-        initializeEventPool(); // 載入機會命運平衡事件池
-        refreshGachaUI();      // 刷新按鈕外觀狀態
+        initializeEventPool();
+        refreshGachaUI();
     }
 
-    /**
-     * 📊 核心 UI/UX 狀態機：動態重塑按鈕文字與停用狀態
-     * 連動 MainGameController 的每日純隨機契機狀態
-     */
     public void refreshGachaUI() {
         if (mainController == null || mainController.getPlayerCompany() == null) return;
-
-        // 防禦機制：如果 FXML 綁定尚未成功，先跳出避免 NullPointerException
         if (btnGachaAction == null) return;
 
         Company company = mainController.getPlayerCompany();
-        double gachaCost = 1000000; // 抽卡基本花費 100 萬
+        double gachaCost = 1000000;
 
-        // 💡 讀取全新的主控制器隨機狀態（玩家沒錢是他自己的事，點進來會顯示資金不足）
         if (!mainController.isGachaAvailableToday()) {
             btnGachaAction.setDisable(true);
             btnGachaAction.setText("🔒 今日無契機 (等待商業時機)");
@@ -59,26 +47,30 @@ public class GachaController {
         }
     }
 
-    /**
-     * 🎯 抽卡核心事件
-     * 完美對齊 GachaPanel.fxml 的 onAction="#handleDraw"
-     */
     @FXML
     private void handleDraw(ActionEvent event) {
-        // 1. 安全防禦：檢查主控制器今天有沒有開放隨機契機
         if (!mainController.isGachaAvailableToday()) return;
 
         Company company = mainController.getPlayerCompany();
         if (company.getCash() < 1000000) return;
 
-        // 2. 實質扣除 100 萬現金
+        // 1. 實質扣除 100 萬現金
         company.setCash(company.getCash() - 1000000);
+
+        // ⚡ 核心修正：立即同步手續費扣款至大廠底層子金庫，防止數據被吃掉！
+        mainController.syncCashToAllIndustries();
+
+        // 2. 寫入手續費明細
+        company.recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 🎲 繳納機會命運手續費：-$100.00 萬");
 
         // 3. 隨機抽選機會命運事件
         GachaEvent pulledEvent = eventPool.get(random.nextInt(eventPool.size()));
 
-        // 4. 實質結算現金與股價
+        // 4. 實質結算後續的現金與股價獎懲
         company.setCash(company.getCash() + pulledEvent.cashImpact);
+
+        // ⚡ 核心修正：中獎加錢後，立刻通知底層子金庫將中獎金額同步寫入！
+        mainController.syncCashToAllIndustries();
 
         if (pulledEvent.stockPricePercent != 0.0) {
             double oldPrice = company.getStockPrice();
@@ -86,8 +78,8 @@ public class GachaController {
             company.setStockPrice(newPrice);
         }
 
-        // 5. 寫入流水帳
-        company.recordTransaction(String.format("↳ 🎲 機會命運：【%s】%s",
+        // 5. 寫入事件結果的流水帳
+        company.recordTransaction(String.format("↳ 🎲 機會命運結果：【%s】%s",
                 pulledEvent.title,
                 pulledEvent.cashImpact >= 0 ? "+$" + mainController.formatMoney(pulledEvent.cashImpact) : "-$" + mainController.formatMoney(Math.abs(pulledEvent.cashImpact))
         ));
@@ -104,19 +96,15 @@ public class GachaController {
             lblResultDisplay.setStyle("-fx-text-fill: " + (pulledEvent.cashImpact < 0 || pulledEvent.stockPricePercent < 0 ? "#E74A3B" : "#2E59D9") + "; -fx-font-size: 15px; -fx-font-weight: bold;");
         }
 
-        // 7. 🎯 全新機制核心：抽完卡後，通知主控制器今天已抽，明天強制進入冷卻，並立刻隱藏紅點
+        // 7. 通知主控制器今天已抽，明天強制進入冷卻
         mainController.setGachaUsedToday();
 
-        // 8. 刷新當前抽卡面板 UI (按鈕會因今日已被標記不可用，立刻變成 🔒 今日無契機)
+        // 8. 刷新當前抽卡面板 UI
         refreshGachaUI();
 
         mainController.updateStatusLabels();
     }
 
-    /**
-     * 🔙 轉盤頁面的返回鍵事件
-     * 點擊後會通知 MainGameController 安全返回當前經營產業，對齊 FXML 中的 onAction="#handleBack"
-     */
     @FXML
     private void handleBack(ActionEvent event) {
         if (mainController != null) {
@@ -168,7 +156,7 @@ public class GachaController {
         eventPool.add(new GachaEvent("命運", "投資錯誤", "盲目擴張失敗。", -8000000, 0.0));
         eventPool.add(new GachaEvent("命運", "合作夥伴跑路", "貨款追不回來。", -6000000, 0.0));
         eventPool.add(new GachaEvent("命運", "AI 回答失控", "產品講出奇怪內容。", 0, -0.18));
-        eventPool.add(new GachaEvent("命運", "專利訴訟", "被競爭對手告上法院。", -12000000, 0.0));
+        eventPool.add(new GachaEvent("命運", "专利訴訟", "被競爭對手告上法院。", -12000000, 0.0));
         eventPool.add(new GachaEvent("命運", "雲端服務爆炸", "API 全掛。", -3500000, 0.0));
     }
 
