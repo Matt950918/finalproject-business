@@ -405,6 +405,15 @@ public class MainGameController {
         timeline.stop();
         double oldPrice = playerCompany.getStockPrice();
         MarketEvent resultEvent = (selectedOption != null) ? selectedOption.execute(playerCompany) : null;
+
+        // 🆕 【精準攔截連動】：如果結果名稱包含「火災停業」，強迫科技系統啟動 3 天停業
+        if (resultEvent != null && resultEvent.getName() != null && resultEvent.getName().contains("火災停業")) {
+            if (techSystem != null) {
+                techSystem.triggerFireLockdown(3);
+                System.out.println("🚨 成功攔截火災事件！已強迫科技半導體系統停業 3 天。");
+            }
+        }
+
         playerCompany.updateStockPrice(currentDay, resultEvent);
 
         if (playerCompany.getIndustry() == IndustryType.BANK) bankSystem.setMoney(playerCompany.getCash());

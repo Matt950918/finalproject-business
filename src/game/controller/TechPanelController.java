@@ -34,20 +34,38 @@ public class TechPanelController {
         this.techSystem = techSystem;
         this.mainController = mainController;
 
-        // 🎯 如果工廠失火，清空畫面上的可用新任務，直到復工
+        // 🎯 1. 核心修復：如果工廠火災停業中，強制把右側所有研發、系統升級按鈕全部關閉！
         if (techSystem.getFireLockdownTurns() > 0) {
-            availableContracts.clear();
-            partnerListContainer.getChildren().clear();
-            lblTechTitle.setText("🚨 工廠火災事故處理中！全面停業");
-        } else {
-            if (availableContracts.isEmpty() && lastRefreshDay != mainController.getCurrentDay()) {
-                refreshAvailableContracts();
-                lastRefreshDay = mainController.getCurrentDay();
+            if (lblTechTitle != null) {
+                lblTechTitle.setText(mainController.getPlayerCompany().getName() + " - 🚨 廠房火災封鎖重整中！");
+                lblTechTitle.setStyle("-fx-text-fill: #c0392b; -fx-font-weight: bold;"); // 變成火災紅
             }
-            loadPartnerUI();
-            updateTechTitle();
+
+            if (btnBuyEDA != null) {
+                btnBuyEDA.setDisable(true);
+                btnBuyEDA.setText("🚨 工廠重整中：暫停晶片系統升級");
+            }
+            if (btnUpgradeAI != null) {
+                btnUpgradeAI.setDisable(true);
+                btnUpgradeAI.setText("🚨 工廠重整中：暫停 AI 實驗室研發");
+            }
+        } else {
+            // 火災過去了，恢復原本正常的標題與按鈕狀態
+            if (lblTechTitle != null) {
+                lblTechTitle.setText(mainController.getPlayerCompany().getName() + " - 晶片半導體主控台");
+                lblTechTitle.setStyle("");
+            }
         }
 
+        // 🎯 2. 核心修復：不論是不是今天刷新的合約，一律在這裡強迫重新載入一次左邊的 UI 列表！
+        // 這樣只要一進來這個畫面，它就會立刻去判斷要顯示「警告文字」還是「合約卡片」
+        if (availableContracts.isEmpty() && lastRefreshDay != mainController.getCurrentDay()) {
+            refreshAvailableContracts();
+            lastRefreshDay = mainController.getCurrentDay();
+        }
+
+        // 🔥 關鍵：確保這行在 initData 的最下面被呼叫，它才能精準抓到最新天數並清空列表！
+        loadPartnerUI();
         updateStatusLabels();
     }
 
@@ -108,10 +126,39 @@ public class TechPanelController {
     }
 
     private void loadPartnerUI() {
+        // 1. 每次進來，先清空原本的合約卡片列表
         partnerListContainer.getChildren().clear();
-        for (TechContract contract : new ArrayList<>(availableContracts)) {
-            VBox card = createContractCard(contract);
-            partnerListContainer.getChildren().add(card);
+
+        // 🎯 2. 【生科級清空列表提示】：如果工廠正處於火災停業中
+        if (techSystem != null && techSystem.getFireLockdownTurns() > 0) {
+            // 建立一個漂亮的警告 Label 塞在原本的列表位置
+            Label lblAlert = new Label("🚨 廠房火災封鎖重整中！\n【 暫 停 一 切 商 務 談 判 3 天 】\n產線清理中，剩餘 " + techSystem.getFireLockdownTurns() + " 天。");
+            lblAlert.setStyle("-fx-font-size: 16px; -fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-alignment: center; -fx-text-alignment: center;");
+
+            // 讓警告文字撐滿整個容器並置中
+            lblAlert.setMaxWidth(Double.MAX_VALUE);
+            lblAlert.setMaxHeight(Double.MAX_VALUE);
+            javafx.scene.layout.VBox.setVgrow(lblAlert, javafx.scene.layout.Priority.ALWAYS);
+
+            // 把警告訊息加進清空後的列表，然後直接結束，不載入任何合約！
+            partnerListContainer.getChildren().add(lblAlert);
+            return;
+        }
+
+        // =======================================================
+        // 3. 以下為你原本正常的合約載入邏輯（火災過去後自動恢復）
+        // =======================================================
+        if (availableContracts.isEmpty()) {
+            Label lblNone = new Label("目前沒有可用的商務合約，請等待市場刷新。");
+            lblNone.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 14px;");
+            partnerListContainer.getChildren().add(lblNone);
+            return;
+        }
+
+        // 遍歷目前的合約，並把卡片加進去
+        for (TechContract contract : availableContracts) {
+            javafx.scene.layout.VBox contractCard = createContractCard(contract);
+            partnerListContainer.getChildren().add(contractCard);
         }
     }
 

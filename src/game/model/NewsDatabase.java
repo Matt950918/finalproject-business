@@ -160,6 +160,14 @@ public class NewsDatabase {
                     .filter(n -> n.getTargetIndustry() == null || n.getTargetIndustry() == industry)
                     .collect(Collectors.toList());
         }
+        if (industry == IndustryType.TECH && random.nextDouble() < 0.50) {
+            for (DailyNews news : validNews) {
+                if ("🚨 集團晶片工廠深夜突發大火！".equals(news.getTitle())) {
+                    availableNews.remove(news);
+                    return news;
+                }
+            }
+        }
 
         DailyNews selectedNews = validNews.get(random.nextInt(validNews.size()));
         availableNews.remove(selectedNews);

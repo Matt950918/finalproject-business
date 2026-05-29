@@ -65,7 +65,7 @@
             <PasswordField fx:id="txtRegPassword" promptText="設定密碼 (必填)" style="-fx-font-size: 14px; -fx-padding: 8;" />
 
             <Separator prefWidth="300" style="-fx-padding: 10 0;" />
-            <Label text="請一次設定好您的三個產業子分身公司名稱" style="-fx-font-size: 13px; -fx-text-fill: #4e73df; -fx-font-weight: bold;" />
+            <Label text="請一次設定好您的三個產業子公司名稱" style="-fx-font-size: 13px; -fx-text-fill: #4e73df; -fx-font-weight: bold;" />
 
             <TextField fx:id="txtBankCompanyName" promptText="第一欄：金融銀行公司名稱" style="-fx-font-size: 14px; -fx-padding: 8;" />
             <TextField fx:id="txtTechCompanyName" promptText="第二欄：晶片科技公司名稱" style="-fx-font-size: 14px; -fx-padding: 8;" />
