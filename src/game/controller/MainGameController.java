@@ -14,6 +14,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -291,11 +292,7 @@ public class MainGameController {
             if (todayNews != null) showNewsPopup(todayNews);
         }
 
-        if (currentDay > 0 && currentDay % 30 == 0) {
-            int month = currentDay / 30;
-            playerCompany.summarizeLedger(month);
-            saveCurrentProgress();
-        }
+
     }
 
     private void loadBankPanel() {
@@ -534,5 +531,37 @@ public class MainGameController {
         if (bankSystem != null) bankSystem.setMoney(currentCash);
         if (bioSystem != null) bioSystem.setMoney(currentCash);
         if (techSystem != null) techSystem.setMoney(currentCash);
+    }
+
+    /**
+     * 🆕 新增：點擊「返回主選單」按鈕時的處理邏輯
+     * 退出目前玩家的經營畫面，退回到最開頭的主選單
+     */
+    @FXML
+    private void handleReturnToMainMenu(javafx.event.ActionEvent event) {
+        // 1. 停止當前天數的倒數計時器，避免背景繼續跑
+        if (timeline != null) {
+            timeline.stop();
+        }
+
+        // 2. 自動幫玩家把目前的產業進度存檔，防止資料遺失
+        saveCurrentProgress();
+        System.out.println("💾 已自動保存當前產業進度，準備返回主選單。");
+
+        try {
+            // 3. 重新載入 MainMenu.fxml 畫面
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/MainMenu.fxml"));
+            javafx.scene.Parent root = loader.load();
+
+            // 4. 切換 Scene
+            javafx.stage.Stage stage = (Stage) lblDay.getScene().getWindow();
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.show();
+
+            System.out.println("🚪 成功退出遊戲，已返回主選單介面。");
+        } catch (Exception e) {
+            System.err.println("❌ 載入 MainMenu.fxml 失敗！");
+            e.printStackTrace();
+        }
     }
 }

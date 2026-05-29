@@ -12,7 +12,7 @@
 
     <HBox alignment="CENTER_LEFT" style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-padding: 15 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 5);">
         <VBox spacing="5">
-            <Label fx:id="lblTechTitle" text="💻 遠東 IC 設計與硬體供應鏈中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+            <Label fx:id="lblTechTitle" text="💻 IC 設計與硬體供應鏈中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
             <Label text="主導核心晶片微架構研發、談判籌碼與上下游供應鏈分潤" style="-fx-font-size: 14px; -fx-text-fill: #777777;" />
         </VBox>
         <Region HBox.hgrow="ALWAYS" />
@@ -44,7 +44,7 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <Label text="研發費: $800 萬" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 12px; -fx-font-weight: bold;" />
                     </HBox>
-                    <Label text="【商務保底特權】：引進高階電路模擬布線技術。擁有此系統後，若左側商務談判不幸破裂，大廠因無法輕易取代我們，將『拒絕抽單』，合約得以安全保留原價！" style="-fx-text-fill: #666666; -fx-font-size: 13px;" wrapText="true" />
+                    <Label text="提升自研晶片架構設計能力，升級後可獲得商物談判保底特權，等級越高，大廠抽單機率越低" style="-fx-text-fill: #666666; -fx-font-size: 13px;" wrapText="true" />
                     <HBox alignment="CENTER_RIGHT">
                         <Button fx:id="btnBuyEDA" text="💳 支付開發工具費" onAction="#handleBuyEDA" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 16;" />
                     </HBox>

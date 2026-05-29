@@ -85,13 +85,6 @@ public class Company implements Serializable {
         ledger.add(detail);
     }
 
-    public void summarizeLedger(int month) {
-        ledger.clear();
-        ledger.add("=================================");
-        ledger.add("📅 【" + this.name + " 第 " + month + " 季財務月報】");
-        ledger.add("過往流水帳明細已由會計部封存歸檔。");
-        ledger.add("=================================");
-    }
 
     // ==========================================
     // 📊 股市報價模型與優化公式

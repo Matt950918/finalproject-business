@@ -9,7 +9,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
@@ -22,35 +21,40 @@ public class TechPanelController {
     @FXML private Label lblTechTitle;
     @FXML private VBox partnerListContainer;
 
-    // 綁定升級按鈕控制元件
-    @FXML private Button btnBuyEDA;
+    @FXML private Button btnBuyEDA; // 畫面對應的升級按鈕
     @FXML private Button btnUpgradeAI;
 
     private TechSystem techSystem;
     private MainGameController mainController;
 
     private static List<TechContract> availableContracts = new ArrayList<>();
-
-    // 靜態變數持久化記錄玩家是否解鎖了「自研晶片高階設計系統」特權
-    private static boolean hasDesignTools = false;
+    private static int lastRefreshDay = -1;
 
     public void initData(TechSystem techSystem, MainGameController mainController) {
         this.techSystem = techSystem;
         this.mainController = mainController;
 
-        if (availableContracts.isEmpty()) {
-            refreshAvailableContracts();
+        // 🎯 如果工廠失火，清空畫面上的可用新任務，直到復工
+        if (techSystem.getFireLockdownTurns() > 0) {
+            availableContracts.clear();
+            partnerListContainer.getChildren().clear();
+            lblTechTitle.setText("🚨 工廠火災事故處理中！全面停業");
+        } else {
+            if (availableContracts.isEmpty() && lastRefreshDay != mainController.getCurrentDay()) {
+                refreshAvailableContracts();
+                lastRefreshDay = mainController.getCurrentDay();
+            }
+            loadPartnerUI();
+            updateTechTitle();
         }
 
-        loadPartnerUI();
         updateStatusLabels();
-        updateTechTitle();
     }
 
     public void updateTechTitle() {
         if (mainController != null && mainController.getPlayerCompany() != null && lblTechTitle != null) {
             String companyName = mainController.getPlayerCompany().getName();
-            lblTechTitle.setText("🏢 " + companyName + " - 科技研發主控台");
+            lblTechTitle.setText(companyName + " - 晶片研發主控台");
         }
     }
 
@@ -61,32 +65,30 @@ public class TechPanelController {
         }
     }
 
-    /**
-     * 💻 購買自研高階晶片設計系統邏輯 (原 EDA 軟體授權)
-     */
     @FXML
     private void handleBuyEDA() {
-        if (hasDesignTools) return;
+        double cost = techSystem.getDesignToolsUpgradeCost();
 
-        double edaCost = 8000000; // $800 萬
-        if (mainController.getPlayerCompany().getCash() < edaCost) {
-            showAlert("資金不足", "無法支付 $800 萬的自研晶片高階設計系統開發費。");
+        if (mainController.getPlayerCompany().getCash() < cost) {
+            showAlert("資金不足", "無法支付 $" + mainController.formatMoney(cost) + " 的高階設計系統研發費。");
             return;
         }
 
-        if (techSystem.deductMoney(edaCost)) {
-            hasDesignTools = true; // 永久啟動商務保底特權！
-            mainController.getPlayerCompany().recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 💻 系統研發 - 自研高階晶片設計系統解鎖：-$800.00 萬");
-            showAlert("研發成功", "🎉 高階晶片設計系統已佈署完成！\n👉 【解鎖特權】：未來左側商務談判如果失敗，大廠不會抽單，合約將安全保留原價！");
+        int newLvl = techSystem.getDesignToolsLevel() + 1;
+        if (techSystem.upgradeDesignTools()) {
+            int nextProtectionRate = Math.min(100, newLvl * 25);
+
+            mainController.getPlayerCompany().recordTransaction(
+                    "↳ [第 " + mainController.getCurrentDay() + " 天] 系統研發 - 晶片設計系統升級至 Lv." + newLvl + "：-$" + mainController.formatMoney(cost)
+            );
+
+            showAlert("研發成功", String.format("高階晶片設計系統已升級至 Lv.%d！\n談判失敗時，大廠有 %d%% 的機率不會抽單，合約將安全保留原價！", newLvl, nextProtectionRate));
             syncMoneyToMain();
             updateStatusLabels();
             loadPartnerUI();
         }
     }
 
-    /**
-     * 🚀 升級 AI 實驗室
-     */
     @FXML
     private void handleUpgradeAI() {
         double upgradeCost = 1000000 * Math.pow(2, techSystem.getAiResearchLevel());
@@ -97,7 +99,7 @@ public class TechPanelController {
         }
 
         if (techSystem.upgradeAIResearch()) {
-            mainController.getPlayerCompany().recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 🚀 科技樹升級 - AI 實驗室 Lv." + techSystem.getAiResearchLevel() + "：-$" + mainController.formatMoney(upgradeCost));
+            mainController.getPlayerCompany().recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 科技樹升級 - AI 實驗室 Lv." + techSystem.getAiResearchLevel() + "：-$" + mainController.formatMoney(upgradeCost));
             showAlert("升級成功", "AI 研究度升級成功！當前等級：Lv." + techSystem.getAiResearchLevel());
             syncMoneyToMain();
             updateStatusLabels();
@@ -107,15 +109,9 @@ public class TechPanelController {
 
     private void loadPartnerUI() {
         partnerListContainer.getChildren().clear();
-
         for (TechContract contract : new ArrayList<>(availableContracts)) {
             VBox card = createContractCard(contract);
             partnerListContainer.getChildren().add(card);
-        }
-
-        if (availableContracts.isEmpty()) {
-            refreshAvailableContracts();
-            loadPartnerUI();
         }
     }
 
@@ -124,7 +120,7 @@ public class TechPanelController {
         card.setStyle("-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 16; -fx-border-color: #ebe9f4; -fx-border-width: 1.5;");
 
         boolean isUpstream = contract.getRevenue() == 0;
-        String typeTag = isUpstream ? "【⚙️ 上游採購】" : "【📈 下游供應】";
+        String typeTag = isUpstream ? "【上游採購】" : "【下游供應】";
 
         Label nameLbl = new Label(typeTag + contract.getPartnerName());
         nameLbl.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: " + (isUpstream ? "#4E73DF" : "#1CC88A") + ";");
@@ -144,7 +140,6 @@ public class TechPanelController {
         HBox actions = new HBox(10);
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        // --- 按鈕 A：談判按鈕 ---
         Button btnNegotiate = new Button();
         btnNegotiate.setStyle("-fx-background-color: #f6f6f6; -fx-text-fill: #4e73df; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-border-color: #4e73df; -fx-border-radius: 6;");
 
@@ -152,39 +147,43 @@ public class TechPanelController {
         int currentWinRate = (int)((baseRate + (techSystem.getAiResearchLevel() * 0.05)) * 100);
 
         if (isUpstream) {
-            btnNegotiate.setText(String.format("💬 嘗試砍價 (成功率: %d%%)", currentWinRate));
+            btnNegotiate.setText(String.format("嘗試砍價 (成功率: %d%%)", currentWinRate));
         } else {
-            btnNegotiate.setText(String.format("📈 要求抬價 (成功率: %d%%)", currentWinRate));
+            btnNegotiate.setText(String.format("要求抬價 (成功率: %d%%)", currentWinRate));
         }
 
         if (contract.isNegotiated()) {
-            btnNegotiate.setText("🔒 已完成談判");
+            btnNegotiate.setText("已完成談判");
             btnNegotiate.setDisable(true);
         }
 
         btnNegotiate.setOnAction(e -> {
             boolean success;
+            int toolsLevel = techSystem.getDesignToolsLevel();
+            double protectionChance = toolsLevel * 0.25;
+            boolean isProtected = Math.random() < protectionChance;
+
             if (isUpstream) {
                 success = contract.negotiateCostDown(techSystem.getAiResearchLevel());
                 if (success) {
-                    showAlert("談判大成功！", "🤝 " + contract.getPartnerName() + " 同意了你的方案！成本成功打 75 折！");
+                    showAlert("談判成功", contract.getPartnerName() + " 同意了方案，成本打 75 折。");
                 } else {
-                    if (hasDesignTools) {
-                        showAlert("談判不理想...", "❌ " + contract.getPartnerName() + " 談判破裂拒絕降價。但因為我們擁有【研發晶片設計系統】，大廠不敢輕易撤資，合約安全保留原價（未抽單）！");
+                    if (toolsLevel > 0 && isProtected) {
+                        showAlert("談判失敗", contract.getPartnerName() + " 拒絕降價。但因為晶片設計系統發揮作用，大廠未採取抽單，合約保留原價。");
                     } else {
-                        showAlert("談判破裂...", "❌ " + contract.getPartnerName() + " 覺得你太沒誠意，憤而撤回此項合作！");
+                        showAlert("談判破裂", contract.getPartnerName() + " 直接撤回了此項合作。");
                         availableContracts.remove(contract);
                     }
                 }
             } else {
                 success = contract.negotiateRevenueUp(techSystem.getAiResearchLevel());
                 if (success) {
-                    showAlert("談判大成功！", "💰 " + contract.getPartnerName() + " 認可你的晶片架構，同意提高採購報價 30%！");
+                    showAlert("談判成功", contract.getPartnerName() + " 同意提高採購報價 30%。");
                 } else {
-                    if (hasDesignTools) {
-                        showAlert("談判不理想...", "❌ " + contract.getPartnerName() + " 抬價談崩。但因為我們擁有【研發晶片設計系統】，大廠不敢直接解除合約，得以安全保留原價（未抽單）！");
+                    if (toolsLevel > 0 && isProtected) {
+                        showAlert("談判失敗", contract.getPartnerName() + " 拒絕抬價。但因為晶片設計系統發揮作用，大廠未採取抽單，合約保留原價。");
                     } else {
-                        showAlert("談判破裂...", "❌ " + contract.getPartnerName() + " 轉頭去找別家供應商了，合約作廢！");
+                        showAlert("談判破裂", contract.getPartnerName() + " 轉頭尋找其他供應商，合約作廢。");
                         availableContracts.remove(contract);
                     }
                 }
@@ -192,17 +191,16 @@ public class TechPanelController {
             loadPartnerUI();
         });
 
-        // --- 按鈕 B：簽署合約按鈕 ---
-        Button btnSign = new Button("📝 簽署此合約");
+        Button btnSign = new Button("簽署此合約");
         btnSign.setStyle("-fx-background-color: #4E73DF; -fx-text-fill: #FFFFFF; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand;");
 
         btnSign.setOnAction(e -> {
             techSystem.signContract(contract);
             mainController.getPlayerCompany().recordTransaction(
-                    "↳ [第 " + mainController.getCurrentDay() + " 天] 🤝 簽署供應鏈合約 - " + contract.getPartnerName()
+                    "↳ [第 " + mainController.getCurrentDay() + " 天] 簽署供應鏈合約 - " + contract.getPartnerName()
             );
             availableContracts.remove(contract);
-            showAlert("簽約成功", "合約正式生效！每日換日結束營業時，系統將自動為公司清算此供應鏈的利潤。");
+            showAlert("簽約成功", "合約已正式生效。");
             syncMoneyToMain();
             updateStatusLabels();
             loadPartnerUI();
@@ -227,18 +225,23 @@ public class TechPanelController {
             lblCost.setText("進行中合約：" + techSystem.getActiveContractsCount() + " 檔");
 
             if (btnBuyEDA != null) {
-                if (hasDesignTools) {
-                    btnBuyEDA.setText("✅ 已全面升級自主設計核心");
+                int currentLvl = techSystem.getDesignToolsLevel();
+                double nextCost = techSystem.getDesignToolsUpgradeCost();
+                int currentRate = Math.min(100, currentLvl * 25);
+
+                if (currentLvl >= 4) {
+                    btnBuyEDA.setText(String.format("設計系統已達頂級 Lv.%d (100%% 保底)", currentLvl));
                     btnBuyEDA.setDisable(true);
                 } else {
-                    btnBuyEDA.setText("💳 支付系統研發費 ($800萬)");
+                    btnBuyEDA.setText(String.format("升級晶片設計系統 (Lv.%d➔Lv.%d) | 費用: $%s (防抽單率: %d%%)",
+                            currentLvl, currentLvl + 1, mainController.formatMoney(nextCost), currentRate));
                     btnBuyEDA.setDisable(false);
                 }
             }
 
             if (btnUpgradeAI != null) {
                 double cost = 1000000 * Math.pow(2, techSystem.getAiResearchLevel());
-                btnUpgradeAI.setText(String.format("⚡ 升級 AI 實驗室 (Lv.%d ➔ Lv.%d) | 費用: $%s",
+                btnUpgradeAI.setText(String.format("升級 AI 實驗室 (Lv.%d ➔ Lv.%d) | 費用: $%s",
                         techSystem.getAiResearchLevel(), techSystem.getAiResearchLevel() + 1, mainController.formatMoney(cost)));
             }
         }

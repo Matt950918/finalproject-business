@@ -13,13 +13,23 @@ public class BioSystem implements Serializable {
     private double successBonus = 0;  // 基礎成功率加成
     private double brandValue = 0;    // 品牌溢價報酬
 
-    // ⚙️ 核心變數語意重構
     private double rndLevel = 0;       // 科技一：研發能力等級（控制天數，每次升級 +1.0）
     private double costDiscount = 0;  // 科技三：生產效率折讓（控制金錢，每次升級 +0.05）
 
-    private double pendingReward = 0;
-    private List<Drug> drugs = new ArrayList<>();
+    // 🆕 移除原本的 pendingReward，改用一個內部類別與清單來追蹤每筆利潤的工期倒數
+    private static class PendingRewardItem implements Serializable {
+        private static final long serialVersionUID = 1L;
+        double amount;
+        int remainingDays; // 紀錄該利潤要等幾天
 
+        PendingRewardItem(double amount, int remainingDays) {
+            this.amount = amount;
+            this.remainingDays = remainingDays;
+        }
+    }
+    private List<PendingRewardItem> rewardList = new ArrayList<>();
+
+    private List<Drug> drugs = new ArrayList<>();
     private int lockdownTurns = 0;
     private String systemMessage = "";
 
@@ -37,7 +47,6 @@ public class BioSystem implements Serializable {
         String[] sciPrefix = {"基因", "免疫", "標靶", "核心", "分子", "量子", "終極", "突變", "幻影", "幽靈"};
         String[] chemSuffix = {"酚", "醚", "強鹼", "生物鹼", "化合物", "多肽", "血清", "抑素"};
 
-        // 1. 預防藥 20 種 (工期: 2天)
         for (int i = 1; i <= 20; i++) {
             String name = prePrefix[rand.nextInt(prePrefix.length)] + midPrefix[rand.nextInt(midPrefix.length)] + suffix[rand.nextInt(suffix.length)] + " " + i + "號";
             double rate = 0.70 + (rand.nextDouble() * 0.10 - 0.05);
@@ -46,7 +55,6 @@ public class BioSystem implements Serializable {
             drugs.add(new Drug(name, Drug.DrugType.PREVENTIVE, rate, cost, cost * 1.5, reward, 2));
         }
 
-        // 2. 感冒藥 15 種 (工期: 3~5天)
         for (int i = 1; i <= 15; i++) {
             String name = "感冒" + midPrefix[rand.nextInt(midPrefix.length)] + suffix[rand.nextInt(suffix.length)] + " " + (char)('A' + (i % 26)) + "型";
             double rate = 0.50 + (rand.nextDouble() * 0.10 - 0.05);
@@ -56,7 +64,6 @@ public class BioSystem implements Serializable {
             drugs.add(new Drug(name, Drug.DrugType.COLD, rate, cost, cost * 1.8, reward, days));
         }
 
-        // 3. 特效藥 10 種 (工期: 7天)
         for (int i = 1; i <= 10; i++) {
             String name = sciPrefix[rand.nextInt(sciPrefix.length)] + midPrefix[rand.nextInt(midPrefix.length)] + chemSuffix[rand.nextInt(chemSuffix.length)];
             double rate = 0.20 + (rand.nextDouble() * 0.10 - 0.05);
@@ -65,7 +72,6 @@ public class BioSystem implements Serializable {
             drugs.add(new Drug(name, Drug.DrugType.SPECIAL, rate, cost, cost * 3.0, reward, 7));
         }
 
-        // 4. 毒品 5 種 (工期: 12天)
         for (int i = 1; i <= 5; i++) {
             String name = "【管制】" + sciPrefix[rand.nextInt(sciPrefix.length)] + chemSuffix[rand.nextInt(chemSuffix.length)] + " X-" + i;
             double rate = 0.02 + (rand.nextDouble() * 0.002 - 0.001);
@@ -94,15 +100,15 @@ public class BioSystem implements Serializable {
             return false;
         }
 
-        // 🎯 傳入科技樹第三項的 costDiscount 來動態降低扣款開銷
         double actualCost = drug.getDynamicCost(this.costDiscount);
         if (!deductMoney(actualCost)) {
             systemMessage = "❌ 資金不足！";
             return false;
         }
 
-        // ⏱️ 套用科技樹第一項的 rndLevel 縮短排程工期天數
+        // ⏱️ 套用技術減免，計算並得到實質工期天數
         drug.calculateAndSetCooldown(this.rndLevel);
+        int finalCooldownDays = drug.getRemainingCooldownDays();
 
         // 🎲 當下即時判定結果
         boolean success = drug.tryDevelop(successBonus);
@@ -111,27 +117,27 @@ public class BioSystem implements Serializable {
             double brandLevel = this.brandValue * 10;
             double finalRewardMultiplier = drug.getRewardMultiplier() + (0.1 * brandLevel);
             double rewardAmount = actualCost * finalRewardMultiplier;
-            this.pendingReward += rewardAmount;
 
-            systemMessage = String.format("🎉 解盲成功！【%s】研發完成，工期鎖定 %d 天，明日到帳 $%.0f 萬！",
-                    drug.getName(), drug.getRemainingCooldownDays(), rewardAmount / 10000);
+            // 利潤加入等待隊列，等工期倒數完畢後入帳
+            rewardList.add(new PendingRewardItem(rewardAmount, finalCooldownDays));
+
+            // 🆕 新增：研發成功後，直接從研發列表中移除這個藥物，讓它永遠消失（不再被重複研發）
+            this.drugs.remove(drug);
+
+            systemMessage = String.format("🎉 解盲成功！【%s】進入生產排程。工期為 %d 天，工期結束隔日到帳 $%.0f 萬！",
+                    drug.getName(), finalCooldownDays, rewardAmount / 10000);
         } else {
+            // ❌ 研發失敗：不移除藥物，藥物會保留在清單中，且會因為 finalCooldownDays 進入冷卻調校期
             systemMessage = String.format("💥 實驗失敗！【%s】進入 %d 天設備調校冷卻期。",
-                    drug.getName(), drug.getRemainingCooldownDays());
+                    drug.getName(), finalCooldownDays);
 
-            // 🎯 【黑市毒品處罰核心重構】
             if (drug.getType() == Drug.DrugType.NARCOTIC) {
-                if (Math.random() < 0.90) { // 90% 機率翻車遭檢警突擊搜查
+                if (Math.random() < 0.90) {
                     Random rand = new Random();
-
-                    // 1. 隨機停工天數：3 ~ 7 天 (nextInt(5) 產生 0~4，加 3 等於 3~7)
                     this.lockdownTurns = 3 + rand.nextInt(5);
-
-                    // 2. 處以當前動態研發成本的 2 倍行政罰金
                     double penaltyFine = actualCost * 2;
-                    this.money -= penaltyFine; // 司法行政處分強制扣款
+                    this.money -= penaltyFine;
 
-                    // 3. 組裝高代入感的系統警報訊息
                     systemMessage += String.format(
                             "\n\n🚨 【法律制裁】地下秘密研發遭內線舉報！" +
                                     "\n⚠️ 檢警與衛生局發動聯合突擊搜查！" +
@@ -146,25 +152,41 @@ public class BioSystem implements Serializable {
         return success;
     }
 
+    /**
+     * ⏱️ 每日換日
+     */
     public void tick() {
         systemMessage = "";
+        double totalSettledToday = 0;
 
-        // 🎯 修正修正：即使在全面停工期間，昨日已經研發成功的常規藥利潤（pendingReward）依然要能入帳
-        if (pendingReward > 0) {
-            earnMoney(pendingReward);
-            pendingReward = 0;
+        // 🎯 【利潤天數控管核心】：不管有沒有停工，都要幫正在排程中的獲利減天數
+        List<PendingRewardItem> toRemove = new ArrayList<>();
+        for (PendingRewardItem item : rewardList) {
+            if (item.remainingDays <= 0) {
+                // 如果昨天天數就已經是 0（代表昨天產線工期剛好走完），那今天換日就正式發放利潤！
+                totalSettledToday += item.amount;
+                toRemove.add(item);
+            } else {
+                item.remainingDays--; // 工期天數每日遞減
+            }
+        }
+        rewardList.removeAll(toRemove);
+
+        // 發放今日滿期入帳的錢
+        if (totalSettledToday > 0) {
+            earnMoney(totalSettledToday);
+            // 將到帳金額回傳給動態訊息，讓 Controller 可以抓到來記流水帳
+            systemMessage = "INCOME:" + totalSettledToday;
         }
 
         if (lockdownTurns > 0) {
             lockdownTurns--;
-            // 注意：停工期間，其他藥物的產線工期也應該要一併每天消退，否則復工後常規藥會卡死
             for (Drug drug : drugs) {
                 drug.advanceDay();
             }
             return;
         }
 
-        // 每日推進所有藥物的工期倒數
         for (Drug drug : drugs) {
             drug.advanceDay();
         }
@@ -182,20 +204,10 @@ public class BioSystem implements Serializable {
     public void earnMoney(double amount) { money += amount; }
     public void earnCash(double amount) { this.money += amount; }
 
-    // ==========================================
-    // ⚙️ 科技樹對接專用方法 (重要)
-    // ==========================================
-    public void addEfficiency(double value) {
-        this.rndLevel += value;
-    }
-
-    public void addSuccessBonus(double value) {
-        this.costDiscount += value;
-    }
-
+    public void addEfficiency(double value) { this.rndLevel += value; }
+    public void addSuccessBonus(double value) { this.costDiscount += value; }
     public void addBrandValue(double value) { this.brandValue += value; }
 
-    // Getters & Setters
     public double getMoney() { return money; }
     public void setMoney(double money) { this.money = money; }
     public double getSuccessBonus() { return successBonus; }

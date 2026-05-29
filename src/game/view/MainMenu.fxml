@@ -13,107 +13,79 @@
                   -fx-background-repeat: no-repeat;
                   -fx-background-position: center center;">
 
+    <!-- 主選單圖層 -->
     <VBox fx:id="mainMenuLayer" alignment="CENTER" spacing="25.0">
-
-        <Label text="大富翁" styleClass="title-label" />
-
+        <Label text="商業模擬遊戲" styleClass="title-label" />
         <VBox alignment="CENTER" spacing="20.0">
-
             <Label fx:id="lblWelcome"
-                   text="尚未登入"
+                   text="歡迎來到商業世界"
                    style="-fx-text-fill: #c8b6eb; -fx-font-size: 18px; -fx-font-weight: bold;" />
-
-            <Button text="開始遊戲 START"
+            <Button text="開始遊戲"
                     styleClass="switch-button"
-                    onAction="#handleStartGame" />
-
-            <Button text="遊戲說明 HOW TO PLAY"
+                    onAction="#handleStartGameAction" />
+            <Button text="遊戲說明"
                     styleClass="switch-button"
                     onAction="#showInstructions" />
-
-            <Button text="離開遊戲 EXIT"
+            <Button text="離開遊戲"
                     styleClass="switch-button button-red"
                     onAction="#handleExit" />
         </VBox>
     </VBox>
 
-
+    <!-- 獨立的「登入」圖層（移除了公司名稱輸入框，單純只登入帳號） -->
     <VBox fx:id="loginLayer"
           alignment="CENTER"
           spacing="20.0"
           visible="false"
-          style="-fx-background-color: rgba(255, 255, 255, 0.75); -fx-padding: 40;">
-
-        <Label text="玩家登入 / 註冊"
-               style="-fx-text-fill: #5A5C69; -fx-font-size: 36px; -fx-font-weight: bold;" />
-
-        <Label fx:id="lblLoginMessage"
-               text=""
-               style="-fx-text-fill: #E74A3B; -fx-font-size: 16px;" />
-
+          style="-fx-background-color: rgba(255, 255, 255, 0.8); -fx-padding: 40;">
+        <Label text="玩家登入" style="-fx-text-fill: #5A5C69; -fx-font-size: 36px; -fx-font-weight: bold;" />
+        <Label fx:id="lblLoginMessage" text="" style="-fx-text-fill: #E74A3B; -fx-font-size: 16px;" />
         <VBox spacing="15" maxWidth="300" alignment="CENTER">
-            <TextField fx:id="txtUsername"
-                       promptText="請輸入帳號"
-                       style="-fx-font-size: 16px; -fx-padding: 10;" />
-
-            <PasswordField fx:id="txtPassword"
-                           promptText="請輸入密碼"
-                           style="-fx-font-size: 16px; -fx-padding: 10;" />
+            <TextField fx:id="txtUsername" promptText="請輸入使用者名稱" style="-fx-font-size: 16px; -fx-padding: 10;" />
+            <PasswordField fx:id="txtPassword" promptText="請輸入密碼" style="-fx-font-size: 16px; -fx-padding: 10;" />
         </VBox>
+        <HBox spacing="20" alignment="CENTER">
+            <Button text="確認登入" styleClass="switch-button" onAction="#handleLogin" prefWidth="130" />
+            <Button text="切換至註冊" styleClass="switch-button" onAction="#switchToRegister" prefWidth="130" />
+        </HBox>
+        <Button text="返回主選單" styleClass="switch-button button-red" onAction="#hideLoginLayer" prefWidth="120" />
+    </VBox>
 
-        <VBox alignment="CENTER" spacing="8" maxWidth="300">
-            <Label text="✨ 註冊新帳號時請輸入集團名稱："
-                   style="-fx-font-size: 14px; -fx-text-fill: #4e73df; -fx-font-weight: bold;" />
-            <TextField fx:id="txtCompanyName"
-                       promptText="例如：中央大學..."
-                       style="-fx-font-size: 16px; -fx-padding: 10;" />
+    <!-- 獨立的「註冊 / 創建新帳號」圖層（一次要求填寫帳號密碼與三個子分身公司名稱） -->
+    <VBox fx:id="registerLayer"
+          alignment="CENTER"
+          spacing="15.0"
+          visible="false"
+          style="-fx-background-color: rgba(255, 255, 255, 0.85); -fx-padding: 40;">
+        <Label text="創建全新帳號" style="-fx-text-fill: #5A5C69; -fx-font-size: 32px; -fx-font-weight: bold;" />
+        <Label fx:id="lblRegisterMessage" text="" style="-fx-text-fill: #E74A3B; -fx-font-size: 14px;" />
+
+        <VBox spacing="10" maxWidth="320" alignment="CENTER">
+            <TextField fx:id="txtRegUsername" promptText="設定使用者名稱 (必填)" style="-fx-font-size: 14px; -fx-padding: 8;" />
+            <PasswordField fx:id="txtRegPassword" promptText="設定密碼 (必填)" style="-fx-font-size: 14px; -fx-padding: 8;" />
+
+            <Separator prefWidth="300" style="-fx-padding: 10 0;" />
+            <Label text="請一次設定好您的三個產業子公司名稱" style="-fx-font-size: 13px; -fx-text-fill: #4e73df; -fx-font-weight: bold;" />
+
+            <TextField fx:id="txtBankCompanyName" promptText="第一欄：金融銀行公司名稱" style="-fx-font-size: 14px; -fx-padding: 8;" />
+            <TextField fx:id="txtTechCompanyName" promptText="第二欄：晶片科技公司名稱" style="-fx-font-size: 14px; -fx-padding: 8;" />
+            <TextField fx:id="txtBioCompanyName" promptText="第三欄：生技醫藥公司名稱" style="-fx-font-size: 14px; -fx-padding: 8;" />
         </VBox>
 
         <HBox spacing="20" alignment="CENTER">
-            <Button text="登入"
-                    styleClass="switch-button"
-                    onAction="#handleLogin"
-                    prefWidth="130" />
-
-            <Button text="註冊新帳號"
-                    styleClass="switch-button"
-                    onAction="#handleRegister"
-                    prefWidth="130" />
+            <Button text="確認創建帳號" styleClass="switch-button" onAction="#handleRegister" prefWidth="140" />
+            <Button text="返回登入" styleClass="switch-button" onAction="#switchToLogin" prefWidth="140" />
         </HBox>
-
-        <Button text="返回 BACK"
-                styleClass="switch-button button-red"
-                onAction="#hideLoginLayer"
-                prefWidth="120" />
     </VBox>
 
-
-    <VBox fx:id="instructionLayer"
-          alignment="CENTER"
-          spacing="20.0"
-          visible="false"
-          style="-fx-background-color: rgba(255, 255, 255, 0.75); -fx-padding: 50;">
-
-        <Label text="遊戲說明"
-               style="-fx-text-fill: #5A5C69; -fx-font-size: 40px; -fx-font-weight: bold;" />
-
-        <ScrollPane fitToWidth="true"
-                    prefWidth="600"
-                    prefHeight="400"
-                    style="-fx-background-color: transparent; -fx-background: transparent;">
-
-            <VBox spacing="10"
-                  style="-fx-background-color: #FFFFFF; -fx-padding: 25; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);">
-
-                <Text fill="#5A5C69"
-                      style="-fx-font-size: 18px; -fx-line-spacing: 12px;"
-                      text="【銀行業】核准貸款賺利息，小心客戶跑路！&#10;&#10;【科技業】研發技術，對抗競爭對手！&#10;&#10;【生技業】尋找資金，挑戰解盲機率！" />
+    <!-- 遊戲說明圖層 -->
+    <VBox fx:id="instructionLayer" alignment="CENTER" spacing="20.0" visible="false" style="-fx-background-color: rgba(255, 255, 255, 0.75); -fx-padding: 50;">
+        <Label text="遊戲說明" style="-fx-text-fill: #5A5C69; -fx-font-size: 40px; -fx-font-weight: bold;" />
+        <ScrollPane fitToWidth="true" prefWidth="600" prefHeight="400" style="-fx-background-color: transparent; -fx-background: transparent;">
+            <VBox spacing="10" style="-fx-background-color: #FFFFFF; -fx-padding: 25; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);">
+                <Text fill="#5A5C69" style="-fx-font-size: 18px; -fx-line-spacing: 12px;" text="歡迎來到模擬經營世界！&#10;&#10;在這裡您將同時掌管三家不同的公司，請努力經營賺取最大利潤！" />
             </VBox>
         </ScrollPane>
-
-        <Button text="關閉 CLOSE"
-                styleClass="switch-button button-red"
-                onAction="#hideInstructions" />
+        <Button text="關閉" styleClass="switch-button button-red" onAction="#hideInstructions" />
     </VBox>
-
 </StackPane>

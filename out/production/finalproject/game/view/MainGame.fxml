@@ -24,18 +24,28 @@
 
         <StackPane fx:id="industryContentArea" VBox.vgrow="ALWAYS" />
 
-        <HBox spacing="20" alignment="CENTER" style="-fx-padding: 10 0 0 0;">
+        <HBox spacing="20" alignment="CENTER_LEFT" style="-fx-padding: 10 25 0 25;">
 
-            <StackPane alignment="CENTER" maxWidth="-Infinity" maxHeight="-Infinity">
+            <Region HBox.hgrow="ALWAYS" />
+
+            <HBox spacing="20" alignment="CENTER">
                 <children>
-                    <Button fx:id="btnGacha" text="🎲 機會/命運" onAction="#handleLoadGacha" styleClass="switch-button" style="-fx-font-size: 16px; -fx-padding: 10 20;"/>
+                    <StackPane alignment="CENTER" maxWidth="-Infinity" maxHeight="-Infinity">
+                        <children>
+                            <Button fx:id="btnGacha" text="🎲 機會/命運" onAction="#handleLoadGacha" styleClass="switch-button" style="-fx-font-size: 16px; -fx-padding: 10 20;"/>
+                            <javafx.scene.shape.Circle fx:id="gachaBadge" radius="5" fill="#ff3b30" stroke="WHITE" strokeWidth="1.5"
+                                                       StackPane.alignment="TOP_RIGHT" translateX="3" translateY="-3" visible="false" />
+                        </children>
+                    </StackPane>
 
-                    <javafx.scene.shape.Circle fx:id="gachaBadge" radius="5" fill="#ff3b30" stroke="WHITE" strokeWidth="1.5"
-                                               StackPane.alignment="TOP_RIGHT" translateX="3" translateY="-3" visible="false" />
+                    <Button fx:id="btnRanking" text="🏆 企業排行榜" onAction="#handleLoadRanking" styleClass="switch-button" style="-fx-font-size: 16px; -fx-padding: 10 20;"/>
                 </children>
-            </StackPane>
+            </HBox>
 
-            <Button fx:id="btnRanking" text="🏆 企業排行榜" onAction="#handleLoadRanking" styleClass="switch-button" style="-fx-font-size: 16px; -fx-padding: 10 20;"/>
+            <Region HBox.hgrow="ALWAYS" />
+
+            <Button text="↩ 返回主選單" onAction="#handleReturnToMainMenu"
+                    style="-fx-background-color: #E74A3B; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand; -fx-padding: 10 20;" />
         </HBox>
 
     </VBox>

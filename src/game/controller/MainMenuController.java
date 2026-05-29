@@ -4,43 +4,49 @@ import core.Mainapp;
 import game.model.PlayerAccount;
 import game.model.PlayerAccountSlots;
 import game.model.PlayerData;
+import game.model.Company;
+import game.model.IndustryType;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ChoiceDialog;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.util.Duration;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javafx.util.Duration;
 
 public class MainMenuController {
 
     private static MediaPlayer bgmPlayer;
 
-    @FXML private TextField txtCompanyName;
     @FXML private VBox mainMenuLayer;
     @FXML private VBox instructionLayer;
     @FXML private VBox loginLayer;
+    @FXML private VBox registerLayer;
 
+    // 登入相關欄位
     @FXML private TextField txtUsername;
     @FXML private PasswordField txtPassword;
     @FXML private Label lblLoginMessage;
+
+    // 註冊相關欄位
+    @FXML private TextField txtRegUsername;
+    @FXML private PasswordField txtRegPassword;
+    @FXML private TextField txtBankCompanyName;
+    @FXML private TextField txtTechCompanyName;
+    @FXML private TextField txtBioCompanyName;
+    @FXML private Label lblRegisterMessage;
+
     @FXML private Label lblWelcome;
 
-    public static String companyName = "遠東集團";
     public static String currentUser = null;
-
-    // 🎯 暫存目前登入帳號的「多槽位物件」
     private static PlayerAccountSlots currentAccountSlots = null;
-
-    // 🎯 全域靜態變數，維持給其他子系統讀取「當前遊玩中」的單一公司進度
     public static PlayerData activeProgress = null;
 
     @FXML
@@ -51,10 +57,10 @@ public class MainMenuController {
 
     private void updateWelcomeUI() {
         if (currentUser != null) {
-            lblWelcome.setText("目前登入：" + currentUser);
+            lblWelcome.setText("已登入玩家: " + currentUser);
             lblWelcome.setStyle("-fx-text-fill: #232946; -fx-font-size: 22px; -fx-font-weight: bold;");
         } else {
-            lblWelcome.setText("尚未登入");
+            lblWelcome.setText("未登入");
             lblWelcome.setStyle("-fx-text-fill: #666666; -fx-font-size: 18px;");
         }
     }
@@ -77,134 +83,135 @@ public class MainMenuController {
     }
 
     /**
-     * 🛠️ 修改：點擊開始遊戲時，彈出「選擇存檔槽位」視窗
+     * 點擊「開始遊戲」按鈕的處理邏輯
      */
     @FXML
-    private void handleStartGame(ActionEvent event) {
+    private void handleStartGameAction(ActionEvent event) {
         if (currentUser == null || currentAccountSlots == null) {
-            lblWelcome.setText("⚠️ 請先登入帳號！");
+            lblWelcome.setText("請先登入帳號！");
             lblWelcome.setStyle("-fx-text-fill: #e60012;");
             showLoginLayer(null);
             return;
         }
 
-        // 1. 準備下拉選單的選項文字
+        // 完美對應你的設計理念：直接讓玩家選擇要切換去哪一個分身產業面板
         List<String> choices = new ArrayList<>();
+        String[] industries = {"1. 銀行業", "2. 科技業", "3. 生科業"};
+
         for (int i = 0; i < 3; i++) {
             PlayerData slotData = currentAccountSlots.getSlot(i);
-            if (slotData == null) {
-                choices.add("存檔槽位 " + (i + 1) + " [ 空白新局 ]");
+            if (slotData != null && slotData.getCompany() != null) {
+                choices.add(industries[i] + " [" + slotData.getCompany().getName() + " - 第 " + slotData.getDay() + " 天]");
             } else {
-                String compName = (slotData.getCompany() != null) ? slotData.getCompany().getName() : "籌備中企業";
-                choices.add("存檔槽位 " + (i + 1) + " [ " + compName + " - 第 " + slotData.getDay() + " 天 ]");
+                choices.add(industries[i] + " [未建立]");
             }
         }
 
-        // 2. 彈出 ChoiceDialog 讓玩家選槽位
         ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
-        dialog.setTitle("選擇存檔槽位");
-        dialog.setHeaderText("請選擇您要載入或新創的企業存檔：");
-        dialog.setContentText("可選槽位：");
+        dialog.setTitle("選擇要經營的產業分身");
+        dialog.setHeaderText("請選擇您今天要視察並經營的公司部門：");
+        dialog.setContentText("產業清單:");
 
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
-            // 算出玩家選了哪一個索引 (0, 1, 2)
             int selectedSlotIndex = choices.indexOf(result.get());
-
-            // 3. 取得該槽位的資料
             PlayerData loadedProgress = currentAccountSlots.getSlot(selectedSlotIndex);
 
-            if (loadedProgress != null) {
-                // ➔ 舊存檔：直接載入，繞過選產業畫面
+            if (loadedProgress != null && loadedProgress.getCompany() != null) {
                 activeProgress = loadedProgress;
-                if (loadedProgress.getCompany() != null) {
-                    Mainapp.setGlobalCompanyName(loadedProgress.getCompany().getName());
-                    Mainapp.enterCompany(loadedProgress.getCompany().getIndustry(), selectedSlotIndex);
-                } else {
-                    // 如果有存檔但沒公司（籌備中），帶去選產業
-                    Mainapp.setGlobalCompanyName("新創企業");
-                    Mainapp.showCompanySelect(selectedSlotIndex);
-                }
+                Mainapp.setGlobalCompanyName(loadedProgress.getCompany().getName());
+                Mainapp.enterCompany(loadedProgress.getCompany().getIndustry(), selectedSlotIndex);
             } else {
-                // ➔ 新遊戲：開啟新局，彈窗詢問公司名稱
-                TextInputDialog nameDialog = new TextInputDialog("遠東生技");
-                nameDialog.setTitle("新創企業命名");
-                nameDialog.setHeaderText("建立新公司");
-                nameDialog.setContentText("請輸入您的公司名稱：");
-
-                Optional<String> nameResult = nameDialog.showAndWait();
-                String finalCompanyName = nameResult.isPresent() && !nameResult.get().trim().isEmpty()
-                        ? nameResult.get().trim() : "新創集團";
-
-                // 實例化全新 PlayerData 並綁定到該槽位
-                activeProgress = new PlayerData(currentUser, txtPassword.getText());
-                currentAccountSlots.setSlot(selectedSlotIndex, activeProgress); // 塞入槽位管理器
-
-                // 帶入 global 名稱並切換至選產業畫面（傳入 slotIndex）
-                Mainapp.setGlobalCompanyName(finalCompanyName);
-                Mainapp.showCompanySelect(selectedSlotIndex);
+                lblWelcome.setText("錯誤：該產業分身資料異常，請重新註冊。");
+                lblWelcome.setStyle("-fx-text-fill: #e60012;");
             }
         }
     }
 
-    @FXML
-    private void handleExit(ActionEvent event) {
-        if (bgmPlayer != null) bgmPlayer.stop();
-        System.exit(0);
-    }
-
     /**
-     * 🛠️ 修改：登入改撈取多槽位的 PlayerAccountSlots 物件
+     * 執行登入驗證
      */
     @FXML
     private void handleLogin(ActionEvent event) {
-        String user = txtUsername.getText();
-        String pass = txtPassword.getText();
+        String user = txtUsername.getText().trim();
+        String pass = txtPassword.getText().trim();
 
-        // 🎯 撈出該帳號的「多槽位控制器」
         PlayerAccountSlots loadedAccount = PlayerAccount.loginAndGetAccount(user, pass);
-
         if (loadedAccount != null) {
             currentUser = user;
-            currentAccountSlots = loadedAccount; // 裝進暫存區
-
-            lblLoginMessage.setText("✅ 登入成功！請關閉此視窗並點擊開始遊戲。");
+            currentAccountSlots = loadedAccount;
+            lblLoginMessage.setText("登入成功！");
             lblLoginMessage.setStyle("-fx-text-fill: #00FF00;");
-
             updateWelcomeUI();
             hideLoginLayer(null);
         } else {
-            lblLoginMessage.setText("❌ 帳號或密碼錯誤！");
+            lblLoginMessage.setText("帳號或密碼錯誤！");
             lblLoginMessage.setStyle("-fx-text-fill: #e60012;");
         }
     }
 
     /**
-     * 🛠️ 修改：註冊配合新版 PlayerAccount 的純淨註冊接口 (移除舊版多餘的 compName 參數)
+     * 執行註冊（在這裡把三個分身名字一併綁定創好）
      */
     @FXML
     private void handleRegister(ActionEvent event) {
-        String user = txtUsername.getText();
-        String pass = txtPassword.getText();
+        String user = txtRegUsername.getText().trim();
+        String pass = txtRegPassword.getText().trim();
+        String bankName = txtBankCompanyName.getText().trim();
+        String techName = txtTechCompanyName.getText().trim();
+        String bioName = txtBioCompanyName.getText().trim();
 
-        if (user.isEmpty() || pass.isEmpty()) {
-            lblLoginMessage.setText("⚠️ 帳號或密碼不可為空！");
-            lblLoginMessage.setStyle("-fx-text-fill: #e60012;");
+        if (user.isEmpty() || pass.isEmpty() || bankName.isEmpty() || techName.isEmpty() || bioName.isEmpty()) {
+            lblRegisterMessage.setText("所有欄位均為必填，請完整填寫！");
+            lblRegisterMessage.setStyle("-fx-text-fill: #e60012;");
             return;
         }
 
-        // 調用我們在 PlayerAccount 寫好的多槽位純淨註冊方法
+        // 呼叫底層註冊帳號
         if (PlayerAccount.register(user, pass)) {
-            lblLoginMessage.setText("✅ 帳號創立成功！請點擊登入後，再按開始遊戲創立公司。");
-            lblLoginMessage.setStyle("-fx-text-fill: #00FF00;");
+            // 註冊成功後，立刻取得該帳號的實體，把三個產業分身全部打包初始化進去！
+            PlayerAccountSlots newAccountSlots = PlayerAccount.getUserRegistry().get(user);
+
+            // Slot 0 = 銀行
+            PlayerData bankData = new PlayerData(user, pass);
+            bankData.setCompany(new Company(bankName, IndustryType.BANK));
+            newAccountSlots.setSlot(0, bankData);
+
+            // Slot 1 = 科技
+            PlayerData techData = new PlayerData(user, pass);
+            techData.setCompany(new Company(techName, IndustryType.TECH));
+            newAccountSlots.setSlot(1, techData);
+
+            // Slot 2 = 生科
+            PlayerData bioData = new PlayerData(user, pass);
+            bioData.setCompany(new Company(bioName, IndustryType.BIOTECH));
+            newAccountSlots.setSlot(2, bioData);
+
+            // 強制存檔保存初始化資料
+            PlayerAccount.saveSlotProgress(user, 0, bankData);
+            PlayerAccount.saveSlotProgress(user, 1, techData);
+            PlayerAccount.saveSlotProgress(user, 2, bioData);
+
+            lblRegisterMessage.setText("帳號與三產業分身公司創建成功！請返回登入。");
+            lblRegisterMessage.setStyle("-fx-text-fill: #00FF00;");
+
+            // 註冊完後清空欄位
+            txtRegUsername.clear();
+            txtRegPassword.clear();
+            txtBankCompanyName.clear();
+            txtTechCompanyName.clear();
+            txtBioCompanyName.clear();
         } else {
-            lblLoginMessage.setText("❌ 帳號已存在或格式錯誤！");
-            lblLoginMessage.setStyle("-fx-text-fill: #e60012;");
+            lblRegisterMessage.setText("帳號已存在或創建失敗！");
+            lblRegisterMessage.setStyle("-fx-text-fill: #e60012;");
         }
     }
 
-    @FXML private void showLoginLayer(ActionEvent event) { lblLoginMessage.setText(""); txtUsername.clear(); txtPassword.clear(); txtCompanyName.clear(); mainMenuLayer.setVisible(false); loginLayer.setVisible(true); }
-    @FXML private void hideLoginLayer(ActionEvent event) { loginLayer.setVisible(false); mainMenuLayer.setVisible(true); }
+    @FXML private void switchToRegister() { loginLayer.setVisible(false); registerLayer.setVisible(true); lblRegisterMessage.setText(""); }
+    @FXML private void switchToLogin() { registerLayer.setVisible(false); loginLayer.setVisible(true); lblLoginMessage.setText(""); }
+    @FXML private void showLoginLayer(ActionEvent event) { lblLoginMessage.setText(""); txtUsername.clear(); txtPassword.clear(); mainMenuLayer.setVisible(false); loginLayer.setVisible(true); }
+    @FXML private void hideLoginLayer(ActionEvent event) { loginLayer.setVisible(false); registerLayer.setVisible(false); mainMenuLayer.setVisible(true); }
     @FXML private void showInstructions(ActionEvent event) { mainMenuLayer.setVisible(false); instructionLayer.setVisible(true); }
     @FXML private void hideInstructions(ActionEvent event) { instructionLayer.setVisible(false); mainMenuLayer.setVisible(true); }
+    @FXML private void handleExit(ActionEvent event) { if (bgmPlayer != null) bgmPlayer.stop(); System.exit(0); }
 }

@@ -39,7 +39,7 @@ public class RankingEntry implements Serializable {
         switch (industry) {
             case BANK: return "金融銀行業";
             case BIOTECH: return "生物科技業";
-            case TECH: return "前沿科技業";
+            case TECH: return "晶片科技業";
             default: return "未知產業";
         }
     }

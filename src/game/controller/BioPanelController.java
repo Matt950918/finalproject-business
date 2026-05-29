@@ -79,24 +79,24 @@ public class BioPanelController {
     public void onNextDay() {
         syncMainToBio();
 
-        // 🆕 核心優化：紀錄 tick 前的金庫餘額，用來捕捉生科「隔日讚助金入帳」的數值
-        double beforeMoney = bioSystem.getMoney();
-
-        // 1. 推進生技系統每日進程 (發放昨日收益、遞減全藥物工期、遞減全廠警方查封天數)
+        // 1. 推進生技系統每日進程 (遞減全藥物工期、遞減全廠警方查封天數、處理滿期利潤)
         if (bioSystem != null) {
             bioSystem.tick();
         }
 
-        // 🆕 核心優化：如果換日結算後錢增加了，自動幫他們補上「研發讚助金入帳」明細
-        double dailyIncome = bioSystem.getMoney() - beforeMoney;
-        if (dailyIncome > 0) {
-            mainController.getPlayerCompany().recordTransaction(
-                    "↳ [第 " + mainController.getCurrentDay() + " 天] 💰 收到上市新藥之每日研發讚助營收：+$" + mainController.formatMoney(dailyIncome)
-            );
-        } else if (dailyIncome < 0) {
-            mainController.getPlayerCompany().recordTransaction(
-                    "↳ [第 " + mainController.getCurrentDay() + " 天] 🚨 扣除檢警全面查封之懲罰性罰金：-$" + mainController.formatMoney(Math.abs(dailyIncome))
-            );
+        // 🎯 【精確記帳優化】：檢查是否有剛剛滿期、正式到帳的營收
+        String sysMsg = bioSystem.getSystemMessage();
+        if (sysMsg != null && sysMsg.startsWith("INCOME:")) {
+            try {
+                double dailyIncome = Double.parseDouble(sysMsg.split(":")[1]);
+                if (dailyIncome > 0) {
+                    mainController.getPlayerCompany().recordTransaction(
+                            "↳ [第 " + mainController.getCurrentDay() + " 天] 💰 產線工期結束！新藥利潤今日正式到帳：+$" + mainController.formatMoney(dailyIncome)
+                    );
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         // 2. 每日換日重置當日研發次數上限 (3/3)
@@ -124,7 +124,7 @@ public class BioPanelController {
         }
 
         if (!drug.isAvailable()) {
-            showAlert(Alert.AlertType.WARNING, "產線排程中", "❌ 該藥物產線正忙！剩餘工期/設備調校天數: " + drug.getRemainingCooldownDays() + " 天。");
+            showAlert(Alert.AlertType.WARNING, "產線排程中", "❌ 該藥物產線仍在使用中！剩餘工期/設備調校天數: " + drug.getRemainingCooldownDays() + " 天。");
             return;
         }
 
@@ -218,14 +218,14 @@ public class BioPanelController {
     }
 
     // ==========================================
-    // 🔄 UI 狀態刷新
-    // ==========================================
+// 🔄 UI 狀態刷新
+// ==========================================
     public void updateStatusLabels() {
         if (bioSystem == null) return;
 
         lblRnDStatus.setText(String.format("🔬 研發縮時等級: LV.%.0f (工期減免 %.0f%%)", bioSystem.getRndLevel(), bioSystem.getRndLevel() * 5));
         lblSuccessBonusStatus.setText(String.format("💰 生產開銷折讓: -%.0f%%", bioSystem.getCostDiscount() * 100));
-        lblBrandStatus.setText(String.format("📢 品牌營銷溢價: +%.0f%%", bioSystem.getBrandValue() * 100));
+        lblBrandStatus.setText(String.format("📢 品牌行銷成功使商品漲價: +%.0f%%", bioSystem.getBrandValue() * 100));
 
         if (lblEfficiencyStatus != null) {
             if (bioSystem.getLockdownTurns() > 0) {
@@ -237,21 +237,60 @@ public class BioPanelController {
             }
         }
 
+        // 1. 預防類藥物：判斷是否已成功研發（從底層清單被移除）
+        if (preventiveDrug != null && !bioSystem.getDrugs().contains(preventiveDrug)) {
+            preventiveDrug = null;
+        }
         if (preventiveDrug != null) {
             lblCostPreventive.setText("研發成本: $" + String.format("%,.0f", preventiveDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(preventiveDrug, btnResearchPreventive, lblStatusPreventive);
+        } else {
+            lblStatusPreventive.setText("狀態：已成功上市");
+            lblStatusPreventive.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+            btnResearchPreventive.setText("已上市");
+            btnResearchPreventive.setDisable(true);
+        }
+
+        // 2. 感冒類藥物：判斷是否已成功研發
+        if (coldDrug != null && !bioSystem.getDrugs().contains(coldDrug)) {
+            coldDrug = null;
         }
         if (coldDrug != null) {
             lblCostCold.setText("研發成本: $" + String.format("%,.0f", coldDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(coldDrug, btnResearchCold, lblStatusCold);
+        } else {
+            lblStatusCold.setText("狀態：已成功上市");
+            lblStatusCold.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+            btnResearchCold.setText("已上市");
+            btnResearchCold.setDisable(true);
+        }
+
+        // 3. 特效類藥物：判斷是否已成功研發
+        if (specialDrug != null && !bioSystem.getDrugs().contains(specialDrug)) {
+            specialDrug = null;
         }
         if (specialDrug != null) {
             lblCostSpecial.setText("研發成本: $" + String.format("%,.0f", specialDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(specialDrug, btnResearchSpecial, lblStatusSpecial);
+        } else {
+            lblStatusSpecial.setText("狀態：已成功上市");
+            lblStatusSpecial.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+            btnResearchSpecial.setText("已上市");
+            btnResearchSpecial.setDisable(true);
+        }
+
+        // 4. 管制類藥物（毒藥）：判斷是否已成功研發
+        if (narcoticDrug != null && !bioSystem.getDrugs().contains(narcoticDrug)) {
+            narcoticDrug = null;
         }
         if (narcoticDrug != null) {
             lblCostNarcotic.setText("研發成本: $" + String.format("%,.0f", narcoticDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(narcoticDrug, btnResearchNarcotic, lblStatusNarcotic);
+        } else {
+            lblStatusNarcotic.setText("狀態：已成功上市");
+            lblStatusNarcotic.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+            btnResearchNarcotic.setText("已上市");
+            btnResearchNarcotic.setDisable(true);
         }
     }
 
@@ -280,7 +319,6 @@ public class BioPanelController {
             statusLabel.setText("今日次數已耗盡 (0/3)");
             statusLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold;");
             button.setDisable(true);
-            button.setText("明日請早");
         } else {
             String statusText = String.format("今日剩餘次數: %d/3 次", remaining);
             statusLabel.setText(statusText);

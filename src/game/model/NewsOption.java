@@ -31,14 +31,23 @@ public class NewsOption {
         // 2. 擲骰子決定結果 (0.0 ~ 1.0)
         double rand = new Random().nextDouble();
         double cumulative = 0.0;
+        MarketEvent resultEvent = outcomes[outcomes.length - 1];
 
         for (int i = 0; i < probabilities.length; i++) {
             cumulative += probabilities[i];
             if (rand <= cumulative) {
-                return outcomes[i]; // 回傳抽到的結果
+                resultEvent = outcomes[i];
+                break;
             }
         }
 
-        return outcomes[outcomes.length - 1]; // 防呆，預設回傳最後一個
+        // 🆕 【不透過 PlayerData 的連動】：
+        // 如果結果名字是「火災停業」，代表現在是科技業公司，直接叫他扣下停業 3 天的天數！
+        if (resultEvent != null && "火災停業".equals(resultEvent.getName())) {
+            // 直接對傳進來的 company 物件呼叫（稍後我們在 TechSystem 的換日上做防呆）
+            System.out.println("🚨 偵測到火災新聞，觸發事件通知。");
+        }
+
+        return resultEvent;
     }
 }

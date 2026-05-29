@@ -11,7 +11,7 @@
       style="-fx-background-color: #F4F6F9; -fx-padding: 30; -fx-background-radius: 15;">
 
     <VBox alignment="CENTER" spacing="5">
-        <Label text="👑 全球企業風雲榜"
+        <Label text="👑 企業風雲榜"
                style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #4e73df;" />
         <Label text="即時連線排序全伺服器最頂尖的核心企業"
                style="-fx-font-size: 13px; -fx-text-fill: #858796;" />
