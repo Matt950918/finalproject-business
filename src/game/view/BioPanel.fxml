@@ -94,12 +94,29 @@
             <Separator />
             <Label text="透過挹注資本升級實驗室設備或優化生產製程，永久改良全藥產線的排程天數與資金開銷。" style="-fx-text-fill: #777777; -fx-font-size: 13px;" wrapText="true" />
 
-            <VBox spacing="12" VBox.vgrow="ALWAYS" alignment="TOP_CENTER">
-                <Button text="🔬 升級自動化排程 (工期縮減 5%)" onAction="#handleUpgradeRnD" maxWidth="1.7976931348623157E308" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+            <VBox spacing="15" VBox.vgrow="ALWAYS" alignment="TOP_CENTER">
 
-                <Button text="📢 投放跨國醫學期刊 (+10% 品牌溢價)" onAction="#handleUpgradeBrand" maxWidth="1.7976931348623157E308" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+                <VBox spacing="5">
+                    <Button text="🔬 升級自動化排程 (工期縮減 5%)" onAction="#handleUpgradeRnD" maxWidth="1.7976931348623157E308" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+                    <HBox alignment="CENTER_RIGHT">
+                        <Label text="升級成本: $200 萬" style="-fx-text-fill: #e74c3c; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 0 5 0 0;" />
+                    </HBox>
+                </VBox>
 
-                <Button text="⚙️ 改良低溫製程技術 (-5% 研發開銷)" onAction="#handleUpgradeEfficiency" maxWidth="1.7976931348623157E308" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+                <VBox spacing="5">
+                    <Button text="📢 投放跨國醫學期刊 (+10% 品牌溢價)" onAction="#handleUpgradeBrand" maxWidth="1.7976931348623157E308" style="-fx-background-color: #fac9de; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+                    <HBox alignment="CENTER_RIGHT">
+                        <Label text="升級成本: $200 萬" style="-fx-text-fill: #e74c3c; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 0 5 0 0;" />
+                    </HBox>
+                </VBox>
+
+                <VBox spacing="5">
+                    <Button text="⚙️ 改良低溫製程技術 (-5% 研發開銷)" onAction="#handleUpgradeEfficiency" maxWidth="1.7976931348623157E308" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12; -fx-cursor: hand;" />
+                    <HBox alignment="CENTER_RIGHT">
+                        <Label text="升級成本: $200 萬" style="-fx-text-fill: #e74c3c; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 0 5 0 0;" />
+                    </HBox>
+                </VBox>
+
             </VBox>
         </VBox>
 

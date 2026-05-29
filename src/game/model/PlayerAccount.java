@@ -8,51 +8,58 @@ public class PlayerAccount implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final String DATA_FILE = "user_data.dat";
 
-    private static Map<String, PlayerData> userRegistry = new HashMap<>();
+    // 資料庫結構：帳號名稱 -> 多槽位帳戶物件
+    private static Map<String, PlayerAccountSlots> userRegistry = new HashMap<>();
 
     static {
         loadData();
     }
 
-    /**
-     * 🔓 專門提供給排行榜系統（RankingSystem）的公開數據接口
-     */
-    public static Map<String, PlayerData> getUserRegistry() {
+    public static Map<String, PlayerAccountSlots> getUserRegistry() {
         return userRegistry;
     }
 
-    public static PlayerData loginAndGetProgress(String username, String password) {
+    /**
+     * 🔑 玩家登入
+     * 驗證成功後，回傳整組帳號物件（裡面含有 3 個存檔槽位）
+     */
+    public static PlayerAccountSlots loginAndGetAccount(String username, String password) {
         if (userRegistry.containsKey(username)) {
-            PlayerData data = userRegistry.get(username);
-            if (data != null && data.getPassword().equals(password)) {
-                return data;
+            PlayerAccountSlots account = userRegistry.get(username);
+            if (account != null && account.getPassword().equals(password)) {
+                return account;
             }
         }
         return null;
     }
 
     /**
-     * 📝 新增玩家註冊（已修正：拒絕在註冊時塞入預設 BANK 公司）
+     * 📝 玩家註冊
+     * 建立一個擁有 3 個空槽位的乾淨帳號
      */
-    public static boolean register(String username, String password, String companyName) {
+    public static boolean register(String username, String password) {
         if (userRegistry.containsKey(username) || username.trim().isEmpty() || password.trim().isEmpty()) {
             return false;
         }
 
-        // 🆕 建立純淨的玩家帳號物件，此時內部 company 必須為 null！
-        PlayerData newProgress = new PlayerData(username, password);
-
-        userRegistry.put(username, newProgress);
-        saveData(); // 儲存乾淨的空帳號
-        System.out.println("✅ [系統註冊] 成功創立純淨帳號: " + username + "，等待玩家選擇產業。");
+        PlayerAccountSlots newAccount = new PlayerAccountSlots(username, password);
+        userRegistry.put(username, newAccount);
+        saveData();
+        System.out.println("✅ [系統註冊] 成功創立帳號: " + username + "，包含 3 個空存檔槽位。");
         return true;
     }
 
-    public static void saveProgress(PlayerData currentData) {
-        if (currentData != null && currentData.getUsername() != null) {
-            userRegistry.put(currentData.getUsername(), currentData);
-            saveData();
-            System.out.println("💾 [系統儲存] 帳號 " + currentData.getUsername() + " 的進度已成功寫入檔案。");
+    /**
+     * 💾 儲存指定帳號、指定槽位的 PlayerData 遊戲進度
+     */
+    public static void saveSlotProgress(String username, int slotIndex, PlayerData currentData) {
+        if (userRegistry.containsKey(username) && slotIndex >= 0 && slotIndex < 3) {
+            PlayerAccountSlots account = userRegistry.get(username);
+            if (account != null) {
+                account.setSlot(slotIndex, currentData);
+                saveData();
+                System.out.println("💾 [系統儲存] 帳號 " + username + " 的 Slot [" + slotIndex + "] 進度已成功寫入。");
+            }
         }
     }
 
@@ -64,11 +71,12 @@ public class PlayerAccount implements Serializable {
             Object savedData = ois.readObject();
             if (savedData instanceof Map) {
                 Map<?, ?> tempMap = (Map<?, ?>) savedData;
-                if (!tempMap.isEmpty() && tempMap.values().iterator().next() instanceof String) {
-                    System.err.println("⚠️ 偵測到舊版本存檔格式，正在自動重置...");
+                // 防呆：如果原本有舊版的單一存檔，自動重置避免格式衝突崩潰
+                if (!tempMap.isEmpty() && !(tempMap.values().iterator().next() instanceof PlayerAccountSlots)) {
+                    System.err.println("⚠️ 偵測到舊版本單一存檔格式，自動重置為多槽位格式...");
                     userRegistry = new HashMap<>();
                 } else {
-                    userRegistry = (Map<String, PlayerData>) savedData;
+                    userRegistry = (Map<String, PlayerAccountSlots>) savedData;
                 }
             }
         } catch (Exception e) {

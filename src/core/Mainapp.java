@@ -40,7 +40,10 @@ public class Mainapp extends Application {
         }
     }
 
-    public static void showCompanySelect() {
+    /**
+     * 🛠️ 修改：選擇公司類型的畫面，必須知道現在是要把新創的公司塞進哪一個槽位 (slotIndex)
+     */
+    public static void showCompanySelect(int slotIndex) {
         Text title = new Text("請選擇公司類型");
         title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #5A5C69;");
 
@@ -55,10 +58,10 @@ public class Mainapp extends Application {
         backBtn.getStyleClass().add("switch-button");
         backBtn.setStyle("-fx-text-fill: #E74A3B;");
 
-        // 🎯 精準綁定：當點擊不同的按鈕時，會將正確的 IndustryType 列舉型態傳入主遊戲畫面
-        bankBtn.setOnAction(e -> enterCompany(IndustryType.BANK));
-        techBtn.setOnAction(e -> enterCompany(IndustryType.TECH));
-        bioBtn.setOnAction(e -> enterCompany(IndustryType.BIOTECH));
+        // 🎯 精準綁定：點擊按鈕時，除了傳入產業類型 (type)，也把指定好的 slotIndex 一併傳下去
+        bankBtn.setOnAction(e -> enterCompany(IndustryType.BANK, slotIndex));
+        techBtn.setOnAction(e -> enterCompany(IndustryType.TECH, slotIndex));
+        bioBtn.setOnAction(e -> enterCompany(IndustryType.BIOTECH, slotIndex));
         backBtn.setOnAction(e -> showHome());
 
         VBox root = new VBox(20, title, bankBtn, techBtn, bioBtn, backBtn);
@@ -74,7 +77,10 @@ public class Mainapp extends Application {
         primaryStage.setScene(scene);
     }
 
-    public static void enterCompany(IndustryType type) {
+    /**
+     * 🛠️ 修改：進入遊戲畫面方法，新增接收 slotIndex 參數
+     */
+    public static void enterCompany(IndustryType type, int slotIndex) {
         try {
             FXMLLoader loader = new FXMLLoader(Mainapp.class.getResource("/game/view/MainGame.fxml"));
             Parent root = loader.load();
@@ -82,9 +88,11 @@ public class Mainapp extends Application {
             // 💡 讀取取好的公司名稱
             String userCompanyName = globalCompanyName;
 
-            // 取得主畫面的 Controller，並將畫面上選到的產業型態(type)灌入進度控制核心
+            // 取得主畫面的 Controller
             MainGameController controller = loader.getController();
-            controller.startGame(userCompanyName, type);
+
+            // 🎯 重點修正：將槽位編號 slotIndex 灌入 startGame 方法，完成多存檔對接
+            controller.startGame(userCompanyName, type, slotIndex);
 
             primaryStage.setScene(new Scene(root, 900, 650));
         } catch (Exception e) {

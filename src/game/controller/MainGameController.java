@@ -62,6 +62,9 @@ public class MainGameController {
 
     private RankingSystem rankingSystem = new RankingSystem();
 
+    // 🆕 新增：紀錄當前玩家遊玩的存檔槽位 (0, 1, 2)
+    private int currentSlotIndex = 0;
+
     @FXML
     private void handleLoadGacha(ActionEvent event) {
         try {
@@ -143,11 +146,15 @@ public class MainGameController {
         }
     }
 
-    public void startGame(String customName, IndustryType selectedIndustry) {
-        PlayerData sessionData = MainMenuController.activeProgress;
+    /**
+     * 🛠️ 修改：startGame 新增傳入選取的存檔槽位 slotIndex
+     */
+    public void startGame(String customName, IndustryType selectedIndustry, int slotIndex) {
+        this.currentSlotIndex = slotIndex; // 鎖定槽位
+        PlayerData sessionData = MainMenuController.activeProgress; // 這裡通常是玩家點選槽位後包好的對象
 
         if (sessionData != null && sessionData.getCompany() != null && sessionData.getDay() > 0) {
-            System.out.println("📂 [進度載入] 偵測到歷史存檔，還原產業: " + sessionData.getCompany().getIndustry());
+            System.out.println("📂 [進度載入] 成功載入 Slot [" + slotIndex + "] 歷史存檔，產業: " + sessionData.getCompany().getIndustry());
             this.playerCompany = sessionData.getCompany();
             this.currentDay = sessionData.getDay() - 1;
 
@@ -155,7 +162,7 @@ public class MainGameController {
             else if (playerCompany.getIndustry() == IndustryType.BIOTECH) bioSystem.setMoney(playerCompany.getCash());
             else if (playerCompany.getIndustry() == IndustryType.TECH) techSystem.setMoney(playerCompany.getCash());
         } else {
-            System.out.println("🏢 [進度建立] 偵測為全新帳號/新局，完美指定選擇產業: " + selectedIndustry);
+            System.out.println("🏢 [進度建立] Slot [" + slotIndex + "] 為新局，新創產業: " + selectedIndustry);
             playerCompany = new Company(customName, selectedIndustry);
             playerCompany.getLedger().clear();
             playerCompany.recordTransaction("🏢 [系統] " + playerCompany.getName() + " 正式創立！");
@@ -182,9 +189,13 @@ public class MainGameController {
         startNewDay();
     }
 
+    /**
+     * 🛠️ 修改：配合多槽位核心存檔機制重構
+     */
     private void saveCurrentProgress() {
         PlayerData sessionData = MainMenuController.activeProgress;
         if (sessionData != null && playerCompany != null) {
+            // 同步最新的各產業資產到公司物件上
             if (playerCompany.getIndustry() == IndustryType.BANK) playerCompany.setCash(bankSystem.getMoney());
             else if (playerCompany.getIndustry() == IndustryType.BIOTECH) playerCompany.setCash(bioSystem.getMoney());
             else if (playerCompany.getIndustry() == IndustryType.TECH) playerCompany.setCash(techSystem.getMoney());
@@ -192,7 +203,9 @@ public class MainGameController {
             sessionData.setCompany(this.playerCompany);
             sessionData.setMoney(this.playerCompany.getCash());
             sessionData.setDay(this.currentDay);
-            PlayerAccount.saveProgress(sessionData);
+
+            // 🎯 重點修正：改為調用具備槽位參數的 saveSlotProgress 方法
+            PlayerAccount.saveSlotProgress(sessionData.getUsername(), this.currentSlotIndex, sessionData);
         }
     }
 
@@ -241,7 +254,6 @@ public class MainGameController {
                 showBankReportPopup(bankReports);
             }
         }
-        // 🎯 核心修正：實裝生科（BIOTECH）換日的每日延遲營收對帳明細
         else if (activeType == IndustryType.BIOTECH) {
             double beforeMoney = bioSystem.getMoney();
             bioSystem.tick();
@@ -253,7 +265,6 @@ public class MainGameController {
             playerCompany.setCash(bioSystem.getMoney());
             loadBioPanel();
         }
-        // 🎯 核心修正：順便幫科技業（TECH）也補上供應鏈換日盈虧記帳明細，以防以後也漏掉！
         else if (activeType == IndustryType.TECH) {
             double beforeMoney = techSystem.getMoney();
             techSystem.tick();
