@@ -3,6 +3,7 @@ package game.controller;
 import game.model.tech.TechContract;
 import game.model.tech.TechSystem;
 import game.model.tech.Tech_Partner;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
@@ -58,13 +59,12 @@ public class TechPanelController {
         }
 
         // 🎯 2. 核心修復：不論是不是今天刷新的合約，一律在這裡強迫重新載入一次左邊的 UI 列表！
-        // 這樣只要一進來這個畫面，它就會立刻去判斷要顯示「警告文字」還是「合約卡片」
         if (availableContracts.isEmpty() && lastRefreshDay != mainController.getCurrentDay()) {
             refreshAvailableContracts();
             lastRefreshDay = mainController.getCurrentDay();
         }
 
-        // 🔥 關鍵：確保這行在 initData 的最下面被呼叫，它才能精準抓到最新天數並清空列表！
+        // 🔥 關鍵：確保這行在 initData 的最下面被呼叫
         loadPartnerUI();
         updateStatusLabels();
     }
@@ -88,7 +88,13 @@ public class TechPanelController {
         double cost = techSystem.getDesignToolsUpgradeCost();
 
         if (mainController.getPlayerCompany().getCash() < cost) {
-            showAlert("資金不足", "無法支付 $" + mainController.formatMoney(cost) + " 的高階設計系統研發費。");
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("資金不足");
+                alert.setHeaderText(null);
+                alert.setContentText("無法支付 $" + mainController.formatMoney(cost) + " 的高階設計系統研發費。");
+                alert.showAndWait();
+            });
             return;
         }
 
@@ -100,7 +106,14 @@ public class TechPanelController {
                     "↳ [第 " + mainController.getCurrentDay() + " 天] 系統研發 - 晶片設計系統升級至 Lv." + newLvl + "：-$" + mainController.formatMoney(cost)
             );
 
-            showAlert("研發成功", String.format("高階晶片設計系統已升級至 Lv.%d！\n談判失敗時，大廠有 %d%% 的機率不會抽單，合約將安全保留原價！", newLvl, nextProtectionRate));
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("研發成功");
+                alert.setHeaderText(null);
+                alert.setContentText(String.format("高階晶片設計系統已升級至 Lv.%d！\n談判失敗時，大廠有 %d%% 的機率不會抽單，合約將安全保留原價！", newLvl, nextProtectionRate));
+                alert.showAndWait();
+            });
+
             syncMoneyToMain();
             updateStatusLabels();
             loadPartnerUI();
@@ -112,13 +125,27 @@ public class TechPanelController {
         double upgradeCost = 1000000 * Math.pow(2, techSystem.getAiResearchLevel());
 
         if (mainController.getPlayerCompany().getCash() < upgradeCost) {
-            showAlert("資金不足", "無法升級 AI 實驗室！需要資金：$" + mainController.formatMoney(upgradeCost));
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("資金不足");
+                alert.setHeaderText(null);
+                alert.setContentText("無法升級 AI 實驗室！需要資金：$" + mainController.formatMoney(upgradeCost));
+                alert.showAndWait();
+            });
             return;
         }
 
         if (techSystem.upgradeAIResearch()) {
             mainController.getPlayerCompany().recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 科技樹升級 - AI 實驗室 Lv." + techSystem.getAiResearchLevel() + "：-$" + mainController.formatMoney(upgradeCost));
-            showAlert("升級成功", "AI 研究度升級成功！當前等級：Lv." + techSystem.getAiResearchLevel());
+
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("升級成功");
+                alert.setHeaderText(null);
+                alert.setContentText("AI 研究度升級成功！當前等級：Lv." + techSystem.getAiResearchLevel());
+                alert.showAndWait();
+            });
+
             syncMoneyToMain();
             updateStatusLabels();
             loadPartnerUI();
@@ -126,28 +153,20 @@ public class TechPanelController {
     }
 
     private void loadPartnerUI() {
-        // 1. 每次進來，先清空原本的合約卡片列表
         partnerListContainer.getChildren().clear();
 
-        // 🎯 2. 【生科級清空列表提示】：如果工廠正處於火災停業中
         if (techSystem != null && techSystem.getFireLockdownTurns() > 0) {
-            // 建立一個漂亮的警告 Label 塞在原本的列表位置
             Label lblAlert = new Label("🚨 廠房火災封鎖重整中！\n【 暫 停 一 切 商 務 談 判 3 天 】\n產線清理中，剩餘 " + techSystem.getFireLockdownTurns() + " 天。");
             lblAlert.setStyle("-fx-font-size: 16px; -fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-alignment: center; -fx-text-alignment: center;");
 
-            // 讓警告文字撐滿整個容器並置中
             lblAlert.setMaxWidth(Double.MAX_VALUE);
             lblAlert.setMaxHeight(Double.MAX_VALUE);
             javafx.scene.layout.VBox.setVgrow(lblAlert, javafx.scene.layout.Priority.ALWAYS);
 
-            // 把警告訊息加進清空後的列表，然後直接結束，不載入任何合約！
             partnerListContainer.getChildren().add(lblAlert);
             return;
         }
 
-        // =======================================================
-        // 3. 以下為你原本正常的合約載入邏輯（火災過去後自動恢復）
-        // =======================================================
         if (availableContracts.isEmpty()) {
             Label lblNone = new Label("目前沒有可用的商務合約，請等待市場刷新。");
             lblNone.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 14px;");
@@ -155,7 +174,6 @@ public class TechPanelController {
             return;
         }
 
-        // 遍歷目前的合約，並把卡片加進去
         for (TechContract contract : availableContracts) {
             javafx.scene.layout.VBox contractCard = createContractCard(contract);
             partnerListContainer.getChildren().add(contractCard);
@@ -167,7 +185,7 @@ public class TechPanelController {
         card.setStyle("-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 16; -fx-border-color: #ebe9f4; -fx-border-width: 1.5;");
 
         boolean isUpstream = contract.getRevenue() == 0;
-        String typeTag = isUpstream ? "【上游採購】" : "【下游供應】";
+        String typeTag = isUpstream ? "【上游技術授權/採購】" : "【下游客戶供應】";
 
         Label nameLbl = new Label(typeTag + contract.getPartnerName());
         nameLbl.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: " + (isUpstream ? "#4E73DF" : "#1CC88A") + ";");
@@ -176,10 +194,20 @@ public class TechPanelController {
         descLbl.setStyle("-fx-text-fill: #5A5C69; -fx-font-size: 13px;");
         descLbl.setWrapText(true);
 
+        // =======================================================
+        // 🎯 核心語意優化：杜絕「淨利為負數」的低級商業直覺錯誤
+        // =======================================================
         StringBuilder financeInfo = new StringBuilder();
-        if (contract.getRevenue() > 0) financeInfo.append("每期收入: $").append(mainController.formatMoney(contract.getRevenue())).append("  ");
-        if (contract.getCost() > 0) financeInfo.append("每期成本: $").append(mainController.formatMoney(contract.getCost())).append("\n");
-        financeInfo.append("預估每期淨利: $").append(mainController.formatMoney(contract.getMargin())).append(" (合約期數: ").append(contract.getDurationTicks()).append(" 期)");
+        if (isUpstream) {
+            financeInfo.append("每期授權費用支出: $").append(mainController.formatMoney(contract.getCost())).append("\n");
+            financeInfo.append("📊 預估每期淨流出: $").append(mainController.formatMoney(contract.getCost()))
+                    .append(" (合約效期: ").append(contract.getDurationTicks()).append(" 期)");
+        } else {
+            if (contract.getRevenue() > 0) financeInfo.append("每期合約收入: $").append(mainController.formatMoney(contract.getRevenue())).append("  ");
+            if (contract.getCost() > 0) financeInfo.append("每期製造成本: $").append(mainController.formatMoney(contract.getCost())).append("\n");
+            financeInfo.append("📊 預估每期利潤: $").append(mainController.formatMoney(contract.getMargin()))
+                    .append(" (合約效期: ").append(contract.getDurationTicks()).append(" 期)");
+        }
 
         Label financeLbl = new Label(financeInfo.toString());
         financeLbl.setStyle("-fx-font-size: 12px; -fx-text-fill: #858796; -fx-font-family: 'Courier New';");
@@ -194,7 +222,7 @@ public class TechPanelController {
         int currentWinRate = (int)((baseRate + (techSystem.getAiResearchLevel() * 0.05)) * 100);
 
         if (isUpstream) {
-            btnNegotiate.setText(String.format("嘗試砍價 (成功率: %d%%)", currentWinRate));
+            btnNegotiate.setText(String.format("嘗試向大廠砍價 (成功率: %d%%)", currentWinRate));
         } else {
             btnNegotiate.setText(String.format("要求抬價 (成功率: %d%%)", currentWinRate));
         }
@@ -212,28 +240,40 @@ public class TechPanelController {
 
             if (isUpstream) {
                 success = contract.negotiateCostDown(techSystem.getAiResearchLevel());
-                if (success) {
-                    showAlert("談判成功", contract.getPartnerName() + " 同意了方案，成本打 75 折。");
-                } else {
-                    if (toolsLevel > 0 && isProtected) {
-                        showAlert("談判失敗", contract.getPartnerName() + " 拒絕降價。但因為晶片設計系統發揮作用，大廠未採取抽單，合約保留原價。");
-                    } else {
-                        showAlert("談判破裂", contract.getPartnerName() + " 直接撤回了此項合作。");
-                        availableContracts.remove(contract);
-                    }
+                String title = success ? "談判成功" : (toolsLevel > 0 && isProtected ? "談判失敗" : "談判破裂");
+                String msg = success ? contract.getPartnerName() + " 同意了方案，授權費成本打 75 折。"
+                        : (toolsLevel > 0 && isProtected ? contract.getPartnerName() + " 拒絕降價。但因為晶片設計系統發揮作用，大廠未採取抽單，合約保留原價。"
+                        : contract.getPartnerName() + " 直接撤回了此項合作。");
+
+                if (!success && !(toolsLevel > 0 && isProtected)) {
+                    availableContracts.remove(contract);
                 }
+
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle(title);
+                    alert.setHeaderText(null);
+                    alert.setContentText(msg);
+                    alert.showAndWait();
+                });
             } else {
                 success = contract.negotiateRevenueUp(techSystem.getAiResearchLevel());
-                if (success) {
-                    showAlert("談判成功", contract.getPartnerName() + " 同意提高採購報價 30%。");
-                } else {
-                    if (toolsLevel > 0 && isProtected) {
-                        showAlert("談判失敗", contract.getPartnerName() + " 拒絕抬價。但因為晶片設計系統發揮作用，大廠未採取抽單，合約保留原價。");
-                    } else {
-                        showAlert("談判破裂", contract.getPartnerName() + " 轉頭尋找其他供應商，合約作廢。");
-                        availableContracts.remove(contract);
-                    }
+                String title = success ? "談判成功" : (toolsLevel > 0 && isProtected ? "談判失敗" : "談判破裂");
+                String msg = success ? contract.getPartnerName() + " 同意提高採購報價 30%。"
+                        : (toolsLevel > 0 && isProtected ? contract.getPartnerName() + " 拒絕抬價。但因為晶片設計系統發揮作用，大廠未採取抽單，合約保留原價。"
+                        : contract.getPartnerName() + " 轉頭尋找其他供應商，合約作廢。");
+
+                if (!success && !(toolsLevel > 0 && isProtected)) {
+                    availableContracts.remove(contract);
                 }
+
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle(title);
+                    alert.setHeaderText(null);
+                    alert.setContentText(msg);
+                    alert.showAndWait();
+                });
             }
             loadPartnerUI();
         });
@@ -247,7 +287,15 @@ public class TechPanelController {
                     "↳ [第 " + mainController.getCurrentDay() + " 天] 簽署供應鏈合約 - " + contract.getPartnerName()
             );
             availableContracts.remove(contract);
-            showAlert("簽約成功", "合約已正式生效。");
+
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("簽約成功");
+                alert.setHeaderText(null);
+                alert.setContentText("合約已正式生效。");
+                alert.showAndWait();
+            });
+
             syncMoneyToMain();
             updateStatusLabels();
             loadPartnerUI();
@@ -292,13 +340,5 @@ public class TechPanelController {
                         techSystem.getAiResearchLevel(), techSystem.getAiResearchLevel() + 1, mainController.formatMoney(cost)));
             }
         }
-    }
-
-    private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
     }
 }

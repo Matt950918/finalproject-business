@@ -221,6 +221,92 @@ public class MainGameController {
 
     private void startNewDay() {
         currentDay++;
+
+        // 🎯 核心終局攔截：如果 currentDay 超過 50（代表剛結束第 50 天營業）
+        if (this.currentDay > 50) {
+            // 1. 強制把背景倒數計時器關掉
+            if (timeline != null) {
+                timeline.stop();
+            }
+
+            // 2. 徹底關閉所有可能會殘留的滿版遮罩層（杜絕白色、黑色滿版發白問題）
+            if (resultOverlay != null) resultOverlay.setVisible(false);
+            if (newsOverlay != null) newsOverlay.setVisible(false);
+
+            // 3. 確保大層完全解鎖，允許點擊
+            if (mainGameLayer != null) mainGameLayer.setDisable(false);
+            if (industryContentArea != null) industryContentArea.setDisable(false);
+
+            // 4. 自動幫玩家把最終成績存檔
+            saveCurrentProgress();
+
+            // 5. 彈出大富翁風格的終局結算對話盒
+            javafx.application.Platform.runLater(() -> {
+                javafx.scene.control.Alert gameOverAlert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+                gameOverAlert.setTitle("🏁 50 天商業帝國任期圓滿結束！");
+                gameOverAlert.setHeaderText("👑 恭喜董事長完成 50 天的經營挑戰！");
+
+                double finalCash = playerCompany.getCash();
+                double finalStockPrice = playerCompany.getStockPrice();
+
+                String comment;
+                if (finalCash >= 100000000) {
+                    comment = "🎉 簡真是商業神話！您成功打造了市值通天的超級企業巨頭！";
+                } else if (finalCash >= 50000000) {
+                    comment = "✨ 經營有方！您的企業已經成為園區內不容忽視的強大中流砥柱！";
+                } else if (finalCash > 0) {
+                    comment = "☕ 穩健經營！您成功帶領全體員工挺過了 50 天的商海風暴！";
+                } else {
+                    comment = "🚨 慘澹收場！看來大富翁的商場並不好混，下次再接再厲！";
+                }
+
+                gameOverAlert.setContentText(String.format(
+                        "董事長，任期已滿！集團財務部與董事會已完成最終清算：\n\n" +
+                                "💰 集團最終總資金: %s\n" +
+                                "📈 集團最終總股價: $%.2f\n\n" +
+                                "%s\n\n" +
+                                "👉 提示：點擊確定後，畫面將自動為您切換至【🏆 企業排行榜】。您可以查看自己在所有存檔中的歷史排名，也可以隨時點擊右下角【返回主選單】開啟新局！",
+                        formatMoney(finalCash), finalStockPrice, comment
+                ));
+
+                gameOverAlert.getDialogPane().setStyle("-fx-border-color: #3498db; -fx-border-width: 4px; -fx-background-color: #f7f9fa; -fx-font-family: 'Microsoft JhengHei';");
+                // 🎯 1. 核心修正：將對話框面板拉寬到 550 像素（保證寬度足夠）
+                gameOverAlert.getDialogPane().setPrefWidth(550);
+
+                // 🎯 2. 正確換行修正：從對話框中抓出真正的文字 Label 節點，並對它設定自動換行
+                javafx.scene.Node contentLabel = gameOverAlert.getDialogPane().lookup(".content.markdown-writer-node");
+                if (contentLabel == null) {
+                    // 如果用 class 找不到，就改用一般的文字區域 lookup 抓法
+                    contentLabel = gameOverAlert.getDialogPane().lookup(".content.label");
+                }
+                if (contentLabel instanceof javafx.scene.control.Label) {
+                    ((javafx.scene.control.Label) contentLabel).setWrapText(true);
+                }
+                gameOverAlert.showAndWait();
+
+                // 6. 點擊確認後，精準切換至排行榜，並同步頂部真實資產數值
+                handleLoadRanking(null);
+                updateStatusLabels();
+
+                // 🎯 核心修正：破關後強行把「返回公司經營」按鈕拔掉！
+                if (industryContentArea != null) {
+                    // 透過 CSS Selector 尋找排行榜面板內寫著「返回公司經營」或 fx:id 的按鈕
+                    // 如果你在 FXML 裡有給它 id（例如 btnBackToGame），也可以直接去 RankingController 裡拔
+                    // 這裡最安全、不用改 FXML 的暴力抓法是直接搜尋該區域內所有的 Button：
+                    for (javafx.scene.Node node : industryContentArea.lookupAll(".button")) {
+                        if (node instanceof javafx.scene.control.Button) {
+                            javafx.scene.control.Button btn = (javafx.scene.control.Button) node;
+                            if (btn.getText().contains("返回公司經營") || btn.getText().contains("BACK")) {
+                                btn.setVisible(false); // 徹底隱藏，不留痕跡！
+                                btn.setDisable(true);  // 雙重保險防點擊
+                            }
+                        }
+                    }
+                }
+            });
+
+            return; // 🎯 致命阻斷！絕對不讓程式碼往下跑隨機新聞與其他重新載入邏輯！
+        }
         if (playerCompany != null) {
             playerCompany.decrementBuffTurns();
         }
