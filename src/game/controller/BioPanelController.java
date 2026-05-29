@@ -170,19 +170,14 @@ public class BioPanelController {
     }
 
     // ==========================================
-    // 🌳 技術專利升級事件處理（全部補上 recordTransaction）
+    // 🌳 技術專利升級事件處理
     // ==========================================
     @FXML private void handleUpgradeRnD() {
         syncMainToBio();
         if (mainController.getPlayerCompany().getCash() < 3000000) return;
         bioSystem.deductMoney(3000000);
         techTree.upgradeRnD();
-
-        // 🎯 修正：寫入研發縮時設備升級明細
-        mainController.getPlayerCompany().recordTransaction(
-                "↳ [第 " + mainController.getCurrentDay() + " 天] 🔬 生科專利升級 - 購置研發縮時設備：-$300.00 萬"
-        );
-
+        mainController.getPlayerCompany().recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 🔬 生科專利升級 - 購置研發縮時設備：-$300.00 萬");
         syncMoneyToMain();
         updateStatusLabels();
     }
@@ -192,12 +187,7 @@ public class BioPanelController {
         if (mainController.getPlayerCompany().getCash() < 2500000) return;
         bioSystem.deductMoney(2500000);
         techTree.upgradeBrand();
-
-        // 🎯 修正：寫入品牌形象推廣明細
-        mainController.getPlayerCompany().recordTransaction(
-                "↳ [第 " + mainController.getCurrentDay() + " 天] 📢 生科專利升級 - 投放全球醫學期刊形象：-$250.00 萬"
-        );
-
+        mainController.getPlayerCompany().recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 📢 專利升級 - 投放全球醫學期刊形象：-$250.00 萬");
         syncMoneyToMain();
         updateStatusLabels();
     }
@@ -207,26 +197,23 @@ public class BioPanelController {
         if (mainController.getPlayerCompany().getCash() < 2000000) return;
         bioSystem.deductMoney(2000000);
         techTree.upgradeEfficiency();
-
-        // 🎯 修正：寫入生產開銷優化明細
-        mainController.getPlayerCompany().recordTransaction(
-                "↳ [第 " + mainController.getCurrentDay() + " 天] 💰 生科專利升級 - 精進自動化生產開銷：-$200.00 萬"
-        );
-
+        mainController.getPlayerCompany().recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 💰 專利升級 - 精進自動化生產開銷：-$200.00 萬");
         syncMoneyToMain();
         updateStatusLabels();
     }
 
     // ==========================================
-// 🔄 UI 狀態刷新
-// ==========================================
+    // 🔄 UI 狀態刷新
+    // ==========================================
     public void updateStatusLabels() {
         if (bioSystem == null) return;
 
+        // 更新科技樹升級狀態文字
         lblRnDStatus.setText(String.format("🔬 研發縮時等級: LV.%.0f (工期減免 %.0f%%)", bioSystem.getRndLevel(), bioSystem.getRndLevel() * 5));
         lblSuccessBonusStatus.setText(String.format("💰 生產開銷折讓: -%.0f%%", bioSystem.getCostDiscount() * 100));
         lblBrandStatus.setText(String.format("📢 品牌行銷成功使商品漲價: +%.0f%%", bioSystem.getBrandValue() * 100));
 
+        // 更新廠房查封狀態
         if (lblEfficiencyStatus != null) {
             if (bioSystem.getLockdownTurns() > 0) {
                 lblEfficiencyStatus.setText(String.format("廠房動態：🚨 遭檢警全面查封停工中！(剩餘 %d 天)", bioSystem.getLockdownTurns()));
@@ -237,57 +224,53 @@ public class BioPanelController {
             }
         }
 
-        // 1. 預防類藥物：判斷是否已成功研發（從底層清單被移除）
-        if (preventiveDrug != null && !bioSystem.getDrugs().contains(preventiveDrug)) {
-            preventiveDrug = null;
-        }
-        if (preventiveDrug != null) {
+        // ==========================================
+        // 🎯 核心雙重驗證：只有真正上市 且 不在清單中時才鎖死
+        // ==========================================
+
+        // 【1. 預防類藥物】
+        boolean isPreventiveActive = bioSystem.getDrugs().contains(preventiveDrug);
+        if (preventiveDrug != null && (isPreventiveActive || !preventiveDrug.isLaunched())) {
             lblCostPreventive.setText("研發成本: $" + String.format("%,.0f", preventiveDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(preventiveDrug, btnResearchPreventive, lblStatusPreventive);
         } else {
-            lblStatusPreventive.setText("狀態：已成功上市");
+            lblStatusPreventive.setText("狀態：🎉 研發成功，已上市！");
             lblStatusPreventive.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
             btnResearchPreventive.setText("已上市");
             btnResearchPreventive.setDisable(true);
         }
 
-        // 2. 感冒類藥物：判斷是否已成功研發
-        if (coldDrug != null && !bioSystem.getDrugs().contains(coldDrug)) {
-            coldDrug = null;
-        }
-        if (coldDrug != null) {
+        // 【2. 感冒類藥物】
+        boolean isColdActive = bioSystem.getDrugs().contains(coldDrug);
+        if (coldDrug != null && (isColdActive || !coldDrug.isLaunched())) {
             lblCostCold.setText("研發成本: $" + String.format("%,.0f", coldDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(coldDrug, btnResearchCold, lblStatusCold);
         } else {
-            lblStatusCold.setText("狀態：已成功上市");
+            lblStatusCold.setText("狀態：🎉 研發成功，已上市！");
             lblStatusCold.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
             btnResearchCold.setText("已上市");
             btnResearchCold.setDisable(true);
         }
 
-        // 3. 特效類藥物：判斷是否已成功研發
-        if (specialDrug != null && !bioSystem.getDrugs().contains(specialDrug)) {
-            specialDrug = null;
-        }
-        if (specialDrug != null) {
+        // 【3. 特效類藥物】
+        boolean isSpecialActive = bioSystem.getDrugs().contains(specialDrug);
+        if (specialDrug != null && (isSpecialActive || !specialDrug.isLaunched())) {
             lblCostSpecial.setText("研發成本: $" + String.format("%,.0f", specialDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(specialDrug, btnResearchSpecial, lblStatusSpecial);
         } else {
-            lblStatusSpecial.setText("狀態：已成功上市");
+            lblStatusSpecial.setText("狀態：🎉 研發成功，已上市！");
             lblStatusSpecial.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
             btnResearchSpecial.setText("已上市");
             btnResearchSpecial.setDisable(true);
         }
 
-        // 4. 管制類藥物（毒藥）：判斷是否已成功研發
-        if (narcoticDrug != null && !bioSystem.getDrugs().contains(narcoticDrug)) {
-            narcoticDrug = null;
-        }
-        if (narcoticDrug != null) {
+        // 【4. 管制類藥物】
+        boolean isNarcoticActive = bioSystem.getDrugs().contains(narcoticDrug);
+        if (narcoticDrug != null && (isNarcoticActive || !narcoticDrug.isLaunched())) {
             lblCostNarcotic.setText("研發成本: $" + String.format("%,.0f", narcoticDrug.getDynamicCost(bioSystem.getCostDiscount()) / 10000) + " 萬");
             updateDrugRowUI(narcoticDrug, btnResearchNarcotic, lblStatusNarcotic);
         } else {
-            lblStatusNarcotic.setText("狀態：已成功上市");
+            lblStatusNarcotic.setText("狀態：🎉 研發成功，已上市！");
             lblStatusNarcotic.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
             btnResearchNarcotic.setText("已上市");
             btnResearchNarcotic.setDisable(true);
@@ -322,18 +305,12 @@ public class BioPanelController {
         } else {
             String statusText = String.format("今日剩餘次數: %d/3 次", remaining);
             statusLabel.setText(statusText);
+            statusLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;");
 
-            if (drug.isDiscovered()) {
-                statusLabel.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
-                button.setText("再次研發上市 ➔");
+            if (drug.getType() == Drug.DrugType.NARCOTIC) {
+                button.setText("啟動秘密研發 ➔");
             } else {
-                if (drug.getType() == Drug.DrugType.NARCOTIC) {
-                    statusLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;");
-                    button.setText("啟動秘密研發 ➔");
-                } else {
-                    statusLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;");
-                    button.setText("啟動臨床實驗 ➔");
-                }
+                button.setText("啟動臨床實驗 ➔");
             }
             button.setDisable(false);
         }

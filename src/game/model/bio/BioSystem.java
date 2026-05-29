@@ -121,13 +121,14 @@ public class BioSystem implements Serializable {
             // 利潤加入等待隊列，等工期倒數完畢後入帳
             rewardList.add(new PendingRewardItem(rewardAmount, finalCooldownDays));
 
-            // 🆕 新增：研發成功後，直接從研發列表中移除這個藥物，讓它永遠消失（不再被重複研發）
+            // 🎯 【核心修正】成功上市後打上標記，再移出清單防止讀檔死鎖
+            drug.setLaunched(true);
             this.drugs.remove(drug);
 
             systemMessage = String.format("🎉 解盲成功！【%s】進入生產排程。工期為 %d 天，工期結束隔日到帳 $%.0f 萬！",
                     drug.getName(), finalCooldownDays, rewardAmount / 10000);
         } else {
-            // ❌ 研發失敗：不移除藥物，藥物會保留在清單中，且會因為 finalCooldownDays 進入冷卻調校期
+            // ❌ 研發失敗：不移除藥物，藥物會保留在清單中
             systemMessage = String.format("💥 實驗失敗！【%s】進入 %d 天設備調校冷卻期。",
                     drug.getName(), finalCooldownDays);
 
@@ -159,23 +160,19 @@ public class BioSystem implements Serializable {
         systemMessage = "";
         double totalSettledToday = 0;
 
-        // 🎯 【利潤天數控管核心】：不管有沒有停工，都要幫正在排程中的獲利減天數
         List<PendingRewardItem> toRemove = new ArrayList<>();
         for (PendingRewardItem item : rewardList) {
             if (item.remainingDays <= 0) {
-                // 如果昨天天數就已經是 0（代表昨天產線工期剛好走完），那今天換日就正式發放利潤！
                 totalSettledToday += item.amount;
                 toRemove.add(item);
             } else {
-                item.remainingDays--; // 工期天數每日遞減
+                item.remainingDays--;
             }
         }
         rewardList.removeAll(toRemove);
 
-        // 發放今日滿期入帳的錢
         if (totalSettledToday > 0) {
             earnMoney(totalSettledToday);
-            // 將到帳金額回傳給動態訊息，讓 Controller 可以抓到來記流水帳
             systemMessage = "INCOME:" + totalSettledToday;
         }
 

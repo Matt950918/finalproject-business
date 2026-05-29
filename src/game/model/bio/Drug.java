@@ -26,6 +26,9 @@ public class Drug implements Serializable {
     private int baseDaysRequired;
     private int remainingCooldownDays = 0;
 
+    // 🎯 新增：永久上市狀態標記，避免重登讀檔狀態錯亂導致按鈕鎖死
+    private boolean isLaunched = false;
+
     public Drug(String name, DrugType type, double baseSuccessRate, double cost, double price, double rewardMultiplier, int baseDaysRequired) {
         this.name = name;
         this.type = type;
@@ -35,6 +38,7 @@ public class Drug implements Serializable {
         this.rewardMultiplier = rewardMultiplier;
         this.baseDaysRequired = baseDaysRequired;
         this.isDiscovered = false;
+        this.isLaunched = false; // 預設皆為未上市
     }
 
     /**
@@ -124,4 +128,8 @@ public class Drug implements Serializable {
     public double getBaseSuccessRate() { return baseSuccessRate; }
     public int getRemainingCooldownDays() { return remainingCooldownDays; }
     public boolean isAvailable() { return remainingCooldownDays <= 0; }
+
+    // 🎯 提供上市狀態的外部存取介面
+    public boolean isLaunched() { return isLaunched; }
+    public void setLaunched(boolean launched) { this.isLaunched = launched; }
 }
