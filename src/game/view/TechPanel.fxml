@@ -16,7 +16,7 @@
             <Label fx:id="lblTechTitle" text="💻 IC 設計與硬體供應鏈中心"
                    style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333333;"
                    wrapText="true" />
-            <Label text="主導核心晶片微架構研發、談判籌碼與上下游供應鏈分潤"
+            <Label text="主導核心晶片研發與供應鏈整合。【供應鏈加成：每增加一間上游，下游營收 +20%】"
                    style="-fx-font-size: 13px; -fx-text-fill: #777777;"
                    wrapText="true" />
         </VBox>

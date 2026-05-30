@@ -117,9 +117,9 @@ public class TechSystem {
             double cost = contract.getCost();
 
             // 🎯 【核心好處連動】：如果玩家有簽上游採購，下游供應合約的營收大幅加成！
-            // 每擁有一檔上游採購，下游營收暴增 50% (可依平衡性自行調整)
+            // 每擁有一檔上游採購，下游營收暴增 20% (可依平衡性自行調整)
             if (revenue > 0 && upstreamCount > 0) {
-                revenue *= (1.0 + (upstreamCount * 0.50));
+                revenue *= (1.0 + (upstreamCount * 0.20));
             }
 
             // 結算本期淨利 (收入 - 成本)

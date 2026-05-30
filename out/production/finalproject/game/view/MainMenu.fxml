@@ -120,30 +120,27 @@
         </HBox>
     </VBox>
 
+    <!-- MainMenu.fxml -->
     <VBox fx:id="instructionLayer" alignment="CENTER" spacing="20.0" visible="false"
-          style="-fx-background-color: transparent; -fx-padding: 50;">
-
-        <Label text="遊戲說明"
-               style="-fx-text-fill: #333333;
-                      -fx-font-size: 40px;
-                      -fx-font-weight: bold;
-                      -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);" />
-
-        <ScrollPane fitToWidth="true" prefWidth="620" prefHeight="420"
-                    style="-fx-background-color: transparent; -fx-background: transparent;">
-            <VBox spacing="10"
-                  style="-fx-background-color: rgba(255,255,255,0.85);
-                         -fx-padding: 28; -fx-background-radius: 15;
-                         -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 15, 0, 0, 5);">
+          style="-fx-background-color: transparent; -fx-padding: 30 50;">
+        <Label text="遊戲說明" style="-fx-text-fill: #333333;
+                               -fx-font-size: 36px;
+                               -fx-font-weight: bold;
+                               -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);" />
+        <ScrollPane fitToWidth="true" prefWidth="750" prefHeight="450"
+                    style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <VBox spacing="15"
+                  style="-fx-background-color: rgba(255,255,255,0.92);
+                         -fx-padding: 30; -fx-background-radius: 15;
+                         -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);">
                 <Text fill="#333333"
-                      style="-fx-font-size: 17px; -fx-line-spacing: 14px;"
-                      text="歡迎來到模擬經營世界！&#10;&#10;在這裡您將同時掌管三家不同的公司，請努力經營賺取最大利潤！"
-                      wrappingWidth="560" />
+                      style="-fx-font-size: 15px; -fx-line-spacing: 8px; -fx-font-family: 'Microsoft JhengHei';"
+                      text="📊 基礎資產與股市&#10;• 【資產】：點選可開啟「公司帳本」，查看每一筆收入與支出明細。&#10;• 【股價】：反映公司市值，點選可開啟「K線走勢圖」。股價受市場波動與新聞決策影響（單日漲跌幅限制 ±10%）。&#10;&#10;──────────────────────────────&#10;&#10;🏢 三大產業核心玩法&#10;🔬 科技產業 (TECH) — 供應鏈大亨&#10;• 合約與談判：每日刷新 3 個合作機會，簽約前可派 CEO 談判，成功率受 AI 等級影響。&#10;• 垂直整合加成：每多一個上游供應鏈，全體下游合約的營收將獲得 +20% 的連鎖加成！&#10;💡 tips：升級晶片設計系統可獲得談判失敗防護，升級 AI 可提高談判成功率。&#10;&#10;🧪 生物科技 (BIOTECH) — 藥品與毒品研發&#10;• 新藥研發：共有四種風險與回報各異的新藥可供開發，研發成功可在冷卻期滿後獲得利潤。&#10;• 高風險管制藥：擁有極其驚人的高回報率，但基礎成功率極低。一旦失敗，將面臨極高的停業封鎖與巨額罰金風險！&#10;• 核心升級：升級研發提升成功率並縮短工期、升級品牌可提升報酬、升級效率可降低成本。&#10;&#10;💰 銀行金融業 (BANK) — 風控信貸經理&#10;• 貸款審查：審查客戶的申請金額、利率與信用評等。信用評等越高、違約風險越低，但高風險客戶往往伴隨高利率。此外，在第一次拒絕客戶後，客戶會為了挽留給出不同條件喔！&#10;• 違約風險：批准貸款後可逐日回收本息，但若客戶不幸違約，該筆貸款將直接轉為呆帳，血本無歸，記得控制風險喔！&#10;&#10;──────────────────────────────&#10;&#10;🔮 機會與命運&#10;• 幸運抽獎：當機會命運按鈕右上角出現紫色圓點點時，可花費 $100 萬現金進行命運轉盤抽獎，其中不乏出現很多驚喜喔，快點點看吧！&#10;• 破產逆襲：若現金不幸歸零，將自動觸發免費的「破產逆襲抽獎」，若能抽中現金即可復活，否則遊戲結束。"
+                      wrappingWidth="670" />
             </VBox>
         </ScrollPane>
-
-        <Button text="關閉" styleClass="btn-muted" onAction="#hideInstructions"
-                style="-fx-font-size: 16px; -fx-padding: 12 40;" />
+        <Button text="關閉說明" styleClass="btn-muted" onAction="#hideInstructions"
+                style="-fx-font-size: 15px; -fx-padding: 10 40; -fx-min-width: 150;" />
     </VBox>
 
 </StackPane>
