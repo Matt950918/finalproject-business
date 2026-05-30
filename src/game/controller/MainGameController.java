@@ -493,6 +493,10 @@ public class MainGameController {
             if (techSystem != null) {
                 techSystem.triggerFireLockdown(3);
                 System.out.println("🚨 成功攔截火災事件！已強迫科技半導體系統停業 3 天。");
+                // 🔥 立即重載 TechPanel，讓封鎖畫面即時取代合約卡片，不等玩家點按鈕
+                if (playerCompany.getIndustry() == IndustryType.TECH && currentTechController != null) {
+                    javafx.application.Platform.runLater(this::loadTechPanel);
+                }
             }
         }
 
@@ -645,9 +649,6 @@ public class MainGameController {
         if (techSystem != null) techSystem.setMoney(currentCash);
     }
 
-    /**
-     * 點擊「返回主選單」按鈕時的處理邏輯
-     */
     @FXML
     private void handleReturnToMainMenu(javafx.event.ActionEvent event) {
         if (timeline != null) {
@@ -657,19 +658,9 @@ public class MainGameController {
         saveCurrentProgress();
         System.out.println("💾 已自動保存當前產業進度，準備返回主選單。");
 
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/MainMenu.fxml"));
-            javafx.scene.Parent root = loader.load();
+        core.Mainapp.showHome(); // ✅ 直接呼叫 Mainapp，滿版自動處理好
 
-            javafx.stage.Stage stage = (Stage) lblDay.getScene().getWindow();
-            stage.setScene(new javafx.scene.Scene(root));
-            stage.show();
-
-            System.out.println("🚪 成功退出遊戲，已返回主選單介面。");
-        } catch (Exception e) {
-            System.err.println("❌ 載入 MainMenu.fxml 失敗！");
-            e.printStackTrace();
-        }
+        System.out.println("🚪 成功退出遊戲，已返回主選單介面。");
     }
 
     /**

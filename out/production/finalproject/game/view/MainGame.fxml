@@ -12,67 +12,88 @@
 
     <VBox fx:id="mainGameLayer" spacing="20" alignment="TOP_CENTER" style="-fx-padding: 20;">
 
-        <HBox spacing="30" alignment="CENTER_LEFT" style="-fx-background-color: rgba(255,255,255,0.65); -fx-background-radius: 15; -fx-padding: 12 25;">
-            <Label fx:id="lblDay" text="第 1 天" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-            <Label fx:id="lblTimer" text="剩餘時間：60 秒" style="-fx-font-size: 18px; -fx-text-fill: #E74A3B;" />
+        <!-- 頂部資訊列 -->
+        <HBox spacing="20" alignment="CENTER_LEFT" styleClass="top-navbar">
+            <Label fx:id="lblDay" text="第 1 天"
+                   style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #333333;"
+                   minWidth="90" />
+            <Label fx:id="lblTimer" text="剩餘時間：60 秒"
+                   style="-fx-font-size: 17px; -fx-text-fill: #8A5700; -fx-font-weight: bold;"
+                   minWidth="160" />
+            <!-- 資金與股價：允許自動撐寬，不截字 -->
             <Button fx:id="btnCash" text="資金：$0" onAction="#showLedger"
-                    style="-fx-background-color: transparent; -fx-text-fill: #2E59D9; -fx-font-size: 18px; -fx-cursor: hand; -fx-padding: 0;" />
-            <Button fx:id="btnStockPrice" text="股價：$0.00" onAction="#showStockChart" style="-fx-background-color: transparent; -fx-text-fill: #1CC88A; -fx-font-size: 18px; -fx-cursor: hand; -fx-padding: 0;" />
+                    style="-fx-background-color: transparent; -fx-text-fill: #4E73DF; -fx-font-size: 17px; -fx-cursor: hand; -fx-padding: 0; -fx-font-weight: bold;"
+                    maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+            <Button fx:id="btnStockPrice" text="股價：$0.00" onAction="#showStockChart"
+                    style="-fx-background-color: transparent; -fx-text-fill: #1A7A5E; -fx-font-size: 17px; -fx-cursor: hand; -fx-padding: 0; -fx-font-weight: bold;"
+                    maxWidth="Infinity" HBox.hgrow="ALWAYS" />
             <Region HBox.hgrow="ALWAYS" />
-            <Button text="結束本日營業 ➔" onAction="#handleEndDay" style="-fx-background-color: #b7e9ed; -fx-text-fill: #333333; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand; -fx-padding: 8 18;" />
+            <Button text="結束本日營業 ➔" onAction="#handleEndDay"
+                    styleClass="btn-success"
+                    style="-fx-font-size: 15px; -fx-padding: 9 20;" />
         </HBox>
 
+        <!-- 產業內容區 -->
         <StackPane fx:id="industryContentArea" VBox.vgrow="ALWAYS" />
 
-        <HBox spacing="20" alignment="CENTER_LEFT" style="-fx-padding: 10 25 0 25;">
+        <!-- 底部工具列 -->
+        <HBox spacing="20" alignment="CENTER" style="-fx-padding: 5 25 0 25;">
+            <StackPane alignment="CENTER" maxWidth="-Infinity" maxHeight="-Infinity">
+                <Button fx:id="btnGacha" text="🎲 機會/命運" onAction="#handleLoadGacha"
+                        styleClass="switch-button"
+                        style="-fx-font-size: 15px; -fx-padding: 10 22; -fx-min-width: 0;" />
+                <javafx.scene.shape.Circle fx:id="gachaBadge" radius="5"
+                                           fill="#E3D8F9" stroke="#4A2080" strokeWidth="1.5"
+                                           StackPane.alignment="TOP_RIGHT" translateX="3" translateY="-3"
+                                           visible="false" />
+            </StackPane>
+
+            <Button fx:id="btnRanking" text="🏆 企業排行榜" onAction="#handleLoadRanking"
+                    styleClass="switch-button"
+                    style="-fx-font-size: 15px; -fx-padding: 10 22; -fx-min-width: 0;" />
 
             <Region HBox.hgrow="ALWAYS" />
 
-            <HBox spacing="20" alignment="CENTER">
-                <children>
-                    <StackPane alignment="CENTER" maxWidth="-Infinity" maxHeight="-Infinity">
-                        <children>
-                            <Button fx:id="btnGacha" text="🎲 機會/命運" onAction="#handleLoadGacha" styleClass="switch-button" style="-fx-font-size: 16px; -fx-padding: 10 20;"/>
-                            <javafx.scene.shape.Circle fx:id="gachaBadge" radius="5" fill="#ff3b30" stroke="WHITE" strokeWidth="1.5"
-                                                       StackPane.alignment="TOP_RIGHT" translateX="3" translateY="-3" visible="false" />
-                        </children>
-                    </StackPane>
-
-                    <Button fx:id="btnRanking" text="🏆 企業排行榜" onAction="#handleLoadRanking" styleClass="switch-button" style="-fx-font-size: 16px; -fx-padding: 10 20;"/>
-                </children>
-            </HBox>
-
-            <Region HBox.hgrow="ALWAYS" />
-
+            <!-- 返回主選單：改為低調的粉紅按鈕，不再搶眼的大紅色 -->
             <Button text="↩ 返回主選單" onAction="#handleReturnToMainMenu"
-                    style="-fx-background-color: #E74A3B; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand; -fx-padding: 10 20;" />
+                    styleClass="btn-muted"
+                    style="-fx-font-size: 14px; -fx-padding: 10 20;" />
         </HBox>
 
     </VBox>
 
-    <VBox fx:id="newsOverlay" visible="false" alignment="CENTER" style="-fx-background-color: rgba(0, 0, 0, 0.6);">
-        <VBox alignment="CENTER" spacing="25" style="-fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 20; -fx-padding: 40; -fx-max-width: 700;">
-            <Label text="🚨 突發市場動態" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #E74A3B;" />
+    <!-- 突發新聞 Overlay -->
+    <VBox fx:id="newsOverlay" visible="false" alignment="CENTER"
+          style="-fx-background-color: rgba(0, 0, 0, 0.55);">
+        <VBox alignment="CENTER" spacing="25"
+              style="-fx-background-color: rgba(255,255,255,0.97); -fx-background-radius: 20; -fx-padding: 45; -fx-max-width: 700;">
+            <Label text="🚨 突發市場動態"
+                   style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #4E73DF;" />
             <Separator prefWidth="500" />
-
             <Label fx:id="lblNewsTitle" text="讀取新聞中..."
-                   style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #333333;"
+                   style="-fx-font-size: 21px; -fx-font-weight: bold; -fx-text-fill: #333333;"
                    wrapText="true" textAlignment="CENTER" />
-
             <VBox fx:id="optionsBox" spacing="15" alignment="CENTER" />
-
-            <Button text="忽視此消息 ⏩" onAction="#handleSkipDay" style="-fx-background-color: #DDDDDD; -fx-text-fill: #555555; -fx-font-size: 16px; -fx-background-radius: 10;" />
         </VBox>
     </VBox>
 
-    <VBox fx:id="resultOverlay" visible="false" alignment="CENTER" style="-fx-background-color: rgba(0, 0, 0, 0.6);">
-        <VBox alignment="CENTER" spacing="20" style="-fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 20; -fx-padding: 40; -fx-max-width: 600;">
-            <Label fx:id="lblResultHeader" text="結算報告" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #5A5C69;" />
-            <Separator prefWidth="400" />
-            <Label fx:id="lblSettleReason" text="原因描述" style="-fx-font-size: 18px; -fx-text-fill: #333333;" wrapText="true" textAlignment="CENTER" />
-            <Label fx:id="lblPriceChange" text="股價變動: +10.00" style="-fx-font-size: 22px; -fx-font-weight: bold;" />
-
-            <Button text="進入下一天 ➔" onAction="#closeResultAndProceed" style="-fx-background-color: #4E73DF; -fx-text-fill: white; -fx-font-size: 18px; -fx-background-radius: 10;" />
+    <!-- 日終結算 Overlay -->
+    <VBox fx:id="resultOverlay" visible="false" alignment="CENTER"
+          style="-fx-background-color: rgba(0, 0, 0, 0.55);">
+        <VBox alignment="CENTER" spacing="20"
+              style="-fx-background-color: rgba(255,255,255,0.97); -fx-background-radius: 20; -fx-padding: 45; -fx-max-width: 620;">
+            <Label fx:id="lblResultHeader" text="結算報告"
+                   style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #5A5C69;" />
+            <Separator prefWidth="420" />
+            <Label fx:id="lblSettleReason" text="原因描述"
+                   style="-fx-font-size: 17px; -fx-text-fill: #555555;"
+                   wrapText="true" textAlignment="CENTER" />
+            <Label fx:id="lblPriceChange" text="股價變動: +10.00"
+                   style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #4E73DF;"
+                   wrapText="true" />
+            <Button text="進入下一天 ➔" onAction="#closeResultAndProceed"
+                    styleClass="btn-primary"
+                    style="-fx-font-size: 17px; -fx-padding: 12 35;" />
         </VBox>
     </VBox>
 

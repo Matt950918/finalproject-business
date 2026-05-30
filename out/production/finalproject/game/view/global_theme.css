@@ -1,29 +1,30 @@
 /* ==========================================
-   背景與透明白色遮罩 (Glassmorphism 效果)
+   全域色票 (統一色號，修改這裡即可影響全局)
+   --color-primary   : 主要藍色 (按鈕、連結、強調)
+   --color-success   : 成功綠色 (核准、上市、正常)
+   --color-danger    : 危險紅色 (警告、拒絕、封鎖)
+   --color-neutral   : 中性灰色 (次要文字、分隔)
+   --color-bg        : 頁面背景灰
+   --color-surface   : 卡片白底
    ========================================== */
 
-/* 1. 最底層背景：換成 FINCHECK 的淺灰背景色，或者妳可以放背景圖 */
 .root {
     -fx-background-color: #F4F6F9;
-    /* 如果有背景圖，可以保留這幾行：
-    -fx-background-image: url("bg.jpg");
-    -fx-background-size: cover;
-    */
+    -fx-font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
 }
 
-/* 2. 透明白色層：如果要疊一層透明白，可以把這個 class 加在 FXML 裡的 VBox 或裝內容的容器上 */
+/* ==========================================
+   透明白色遮罩
+   ========================================== */
 .glass-panel {
-    /* rgba(紅, 綠, 藍, 透明度) -> 0.7 代表 70% 不透明的白色 */
     -fx-background-color: rgba(255, 255, 255, 0.7);
-    -fx-background-radius: 20; /* 給它一點圓角更現代 */
+    -fx-background-radius: 20;
     -fx-padding: 40;
 }
 
 /* ==========================================
-   文字與標題
+   文字標題
    ========================================== */
-
-/* 遊戲主標題字體設定：配合淺色背景，文字改成深色 */
 .title-label {
     -fx-text-fill: #5A5C69;
     -fx-font-size: 60px;
@@ -32,10 +33,9 @@
 }
 
 /* ==========================================
-   按鈕 (結合 FINCHECK 的乾淨風格)
+   主要按鈕 (switch-button)
+   白底、深灰字、圓角、陰影
    ========================================== */
-
-/* 按鈕預設狀態：白底、深灰字、淡淡的陰影 */
 .switch-button {
     -fx-background-color: #FFFFFF;
     -fx-text-fill: #5A5C69;
@@ -45,13 +45,221 @@
     -fx-border-radius: 30;
     -fx-padding: 15 40 15 40;
     -fx-min-width: 250px;
-    /* 加上一點柔和的陰影讓按鈕浮出來 */
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
 }
-
 .switch-button:hover {
-    -fx-background-color: #F8F9FC;
-    -fx-border-color: #c8b6eb;
-    -fx-border-width: 3px;
+    -fx-background-color: #F0F2FB;
+    -fx-border-color: #C8B6EB;
+    -fx-border-width: 2px;
     -fx-cursor: hand;
+}
+
+/* ==========================================
+   動作按鈕：藍色主色 (核准、升級、抽卡等積極操作)
+   ========================================== */
+.btn-primary {
+    -fx-background-color: #4E73DF;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.btn-primary:hover {
+    -fx-background-color: #3A5FC8;
+    -fx-cursor: hand;
+}
+
+/* ==========================================
+   成功按鈕：青綠色 (核准放款、正向動作)
+   ========================================== */
+.btn-success {
+    -fx-background-color: #B7E9ED;
+    -fx-text-fill: #2C5F62;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.btn-success:hover {
+    -fx-background-color: #9DD8DD;
+    -fx-cursor: hand;
+}
+
+/* ==========================================
+   次要/返回大按鈕：用於主選單、登入圖層等 (強固寬度保險款 🔒)
+   ========================================== */
+.btn-muted {
+    -fx-background-color: rgba(255, 255, 255, 0.42); /* 半透明精際白底 */
+    -fx-text-fill: #5A6A80;                         /* 質感的深灰藍色字體 */
+    -fx-font-size: 18px;                            /* 稍微放大字體與主要按鈕匹配 */
+    -fx-font-weight: bold;
+    -fx-background-radius: 30;                      /* 鎖定 30 大圓角 */
+    -fx-border-radius: 30;
+
+    /* 💡 核心修復：強制鎖定最小寬度 250px，比照 switch-button 規格，絕對不再縮小縮水！ */
+    -fx-min-width: 250px;
+    -fx-padding: 15 40;                             /* 飽滿大內襯 */
+
+    -fx-border-color: rgba(255, 255, 255, 0.65);     /* 微白透明邊框 */
+    -fx-border-width: 1.5px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 6, 0, 0, 2);
+}
+.btn-muted:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.75); /* 滑鼠懸停時更亮 */
+    -fx-text-fill: #2D3748;
+    -fx-cursor: hand;
+}
+
+/* ==========================================
+   次要/返回小按鈕：用於遊戲說明、彈窗等不需要撐滿 250px 的地方
+   ========================================== */
+.btn-muted-small {
+    -fx-background-color: rgba(255, 255, 255, 0.42);
+    -fx-text-fill: #5A6A80;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 30;
+    -fx-border-radius: 30;
+    -fx-padding: 10 30;                             /* 較小的緊湊內襯 */
+    -fx-border-color: rgba(255, 255, 255, 0.65);
+    -fx-border-width: 1.5px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 6, 0, 0, 2);
+}
+.btn-muted-small:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.75);
+    -fx-text-fill: #2D3748;
+    -fx-cursor: hand;
+}
+
+/* ==========================================
+   危險按鈕：深紫紅 (毒品研發等高風險操作)
+   只用在真正需要警示的場景
+   ========================================== */
+.btn-danger {
+    -fx-background-color: #E3D8F9;
+    -fx-text-fill: #4A2080;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.btn-danger:hover {
+    -fx-background-color: #D2C3F5;
+    -fx-cursor: hand;
+}
+
+/* ==========================================
+   狀態標籤 badge 樣式 (頂部資訊列小標籤)
+   ========================================== */
+.badge-blue {
+    -fx-background-color: #C4DCFA;
+    -fx-text-fill: #1A3A6E;
+    -fx-padding: 6 12;
+    -fx-background-radius: 15;
+    -fx-font-weight: bold;
+}
+.badge-teal {
+    -fx-background-color: #B7E9ED;
+    -fx-text-fill: #1A4E52;
+    -fx-padding: 6 14;
+    -fx-background-radius: 15;
+    -fx-font-weight: bold;
+    -fx-text-alignment: right;
+}
+.badge-pink {
+    -fx-background-color: #FAC9DE;
+    -fx-text-fill: #5A2D41;
+    -fx-padding: 6 14;
+    -fx-background-radius: 15;
+    -fx-font-weight: bold;
+    -fx-text-alignment: right;
+}
+.badge-purple {
+    -fx-background-color: #E3D8F9;
+    -fx-text-fill: #4A2080;
+    -fx-padding: 6 14;
+    -fx-background-radius: 15;
+    -fx-font-weight: bold;
+    -fx-text-alignment: right;
+}
+.badge-gray {
+    -fx-background-color: #EBE9F4;
+    -fx-text-fill: #5A5C69;
+    -fx-padding: 6 12;
+    -fx-background-radius: 15;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================
+   成本標籤 (卡片右上角小金額標籤)
+   ========================================== */
+.cost-label {
+    -fx-background-color: #E3D8F9;
+    -fx-text-fill: #4A2080;
+    -fx-padding: 4 10;
+    -fx-background-radius: 10;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+.cost-label-danger {
+    -fx-background-color: #FAC9DE;
+    -fx-text-fill: #5A2D41;
+    -fx-padding: 4 10;
+    -fx-background-radius: 10;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================
+   升級成本標籤 (右下小字)
+   ========================================== */
+.upgrade-cost-label {
+    -fx-text-fill: #858796;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 5 0 0;
+}
+
+/* ==========================================
+   狀態文字：成功 / 警告 / 錯誤
+   ========================================== */
+.status-success {
+    -fx-text-fill: #1A7A5E;
+    -fx-font-weight: bold;
+}
+.status-warning {
+    -fx-text-fill: #8A5700;
+    -fx-font-weight: bold;
+}
+.status-danger {
+    -fx-text-fill: #7B241C;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================
+   頂部資訊列 (NavBar)
+   ========================================== */
+.top-navbar {
+    -fx-background-color: rgba(255,255,255,0.75);
+    -fx-background-radius: 15;
+    -fx-padding: 12 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 3);
+}
+
+/* ==========================================
+   卡片樣式
+   ========================================== */
+.card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 12;
+    -fx-padding: 18;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 5, 0, 0, 2);
+}
+.card-section {
+    -fx-background-color: #F7F7F7;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+    -fx-border-color: #EBE9F4;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 15;
 }

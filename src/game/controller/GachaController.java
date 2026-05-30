@@ -60,7 +60,7 @@ public class GachaController {
             btnGachaAction.setDisable(false); // 🔓 確保絕對不被卡住
             btnGachaAction.setVisible(true);
             btnGachaAction.setText(" 逆天改命！(免費機會)");
-            btnGachaAction.setStyle("-fx-background-color: #E74A3B; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand;");
+            btnGachaAction.setStyle("-fx-background-color: #E74A3B; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-background-radius: 14; -fx-cursor: hand; -fx-font-size: 18px; -fx-padding: 16 50; -fx-min-width: 320px;");
 
             if (lblResultDisplay != null) {
                 lblResultDisplay.setText(" 孤注一擲！\n\n 這是你最後的機會，抽中加薪事件即可復活！");
@@ -75,38 +75,38 @@ public class GachaController {
         if (hasDrawnThisTurn) {
             // 狀態 A：董事長「今天已經按過抽獎」
             btnGachaAction.setDisable(true);
-            btnGachaAction.setText("🔒 今日契機已用盡 (等待換日)");
-            btnGachaAction.setStyle("-fx-background-color: #BDC3C7; -fx-text-fill: #7F8C8D; -fx-font-weight: bold; -fx-background-radius: 10;");
+            btnGachaAction.setText("🔒 今日牌卡已用盡");
+            btnGachaAction.setStyle("-fx-background-color: #BDC3C7; -fx-text-fill: #7F8C8D; -fx-font-weight: bold; -fx-background-radius: 14; -fx-font-size: 18px; -fx-padding: 16 50; -fx-min-width: 320px;");
 
             if (lblResultDisplay != null) {
-                lblResultDisplay.setText("✨ 本日機會命運已抽取完畢。\n投資市場瞬息萬變，請期待明日的全新商業契機！");
+                lblResultDisplay.setText("✨ 本日機會命運已抽取完畢。\n");
                 lblResultDisplay.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 15px; -fx-font-weight: bold;");
             }
         } else if (!mainController.isGachaAvailableToday()) {
-            // 狀態 B：董事長「還沒抽」，但今天主金庫隨機判定為冷卻日（無契機）
+            // 狀態 B：董事長「還沒抽」，但今天主金庫隨機判定為冷卻日
             btnGachaAction.setDisable(true);
             btnGachaAction.setText("🔒 今日無法遊玩");
-            btnGachaAction.setStyle("-fx-background-color: #BDC3C7; -fx-text-fill: #7F8C8D; -fx-font-weight: bold; -fx-background-radius: 10;");
+            btnGachaAction.setStyle("-fx-background-color: #BDC3C7; -fx-text-fill: #7F8C8D; -fx-font-weight: bold; -fx-background-radius: 14; -fx-font-size: 18px; -fx-padding: 16 50; -fx-min-width: 320px;");
 
             if (lblResultDisplay != null) {
-                lblResultDisplay.setText("💤 商業契機尚未顯現...\n\n今日不宜抽卡。卡池關閉。\n請點擊「結束本日營業」進入下一天，刷新集團運勢！");
+                lblResultDisplay.setText("💤 \n今日不宜抽卡。卡池關閉。\n請點擊「結束本日營業」進入下一天！");
                 lblResultDisplay.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 15px; -fx-font-weight: bold;");
             }
         } else if (company.getCash() < gachaCost) {
             // 狀態 C：今天有契機，但公司金庫錢不夠
             btnGachaAction.setDisable(true);
             btnGachaAction.setText("❌ 資金不足 ($100 萬)");
-            btnGachaAction.setStyle("-fx-background-color: #E67E22; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-background-radius: 10;");
+            btnGachaAction.setStyle("-fx-background-color: #E67E22; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-background-radius: 14; -fx-font-size: 18px; -fx-padding: 16 50; -fx-min-width: 320px;");
 
             if (lblResultDisplay != null) {
-                lblResultDisplay.setText("🎲 機會與命運已就緒！\n\n⚠️ 警告：目前集團現金不足 $100 萬手續費，無法開啟契約。");
+                lblResultDisplay.setText("🎲 機會與命運已就緒！\n\n⚠️ 警告：目前集團現金不足 $100 萬手續費，無法遊玩。");
                 lblResultDisplay.setStyle("-fx-text-fill: #e67e22; -fx-font-size: 15px; -fx-font-weight: bold;");
             }
         } else {
             // 狀態 D：今天有契機、錢也夠，完美的準備開抽狀態！
             btnGachaAction.setDisable(false);
             btnGachaAction.setText("🎲 抽取機會命運 (花費 $100 萬)");
-            btnGachaAction.setStyle("-fx-background-color: #2E59D9; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand;");
+            btnGachaAction.setStyle("-fx-background-color: #2E59D9; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-background-radius: 14; -fx-cursor: hand; -fx-font-size: 18px; -fx-padding: 16 50; -fx-min-width: 320px;");
 
             if (lblResultDisplay != null) {
                 lblResultDisplay.setText("🎲 命運與機會的牌卡已準備完畢！\n\n✨ 提示：今日幸運女神對集團露出了微笑，花費 $100 萬手續費即可遊玩一次機會命運！");

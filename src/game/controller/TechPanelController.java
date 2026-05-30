@@ -96,6 +96,11 @@ public class TechPanelController {
 
         int newLvl = techSystem.getDesignToolsLevel() + 1;
         if (techSystem.upgradeDesignTools()) {
+            // 💡 【修復核心】：直接扣除主公司資金，並同步更新子系統內部存儲的金額，防止舊金額覆蓋洗掉款項
+            double remainingCash = mainController.getPlayerCompany().getCash() - cost;
+            mainController.getPlayerCompany().setCash(remainingCash);
+            techSystem.setMoney(remainingCash);
+
             int nextProtectionRate = Math.min(100, newLvl * 25);
 
             mainController.getPlayerCompany().recordTransaction(
@@ -110,7 +115,7 @@ public class TechPanelController {
                 alert.showAndWait();
             });
 
-            syncMoneyToMain();
+            mainController.updateStatusLabels(); // 即時重新整理頂部主要 NavBar 資金數據
             updateStatusLabels();
             loadPartnerUI();
         }
@@ -132,6 +137,11 @@ public class TechPanelController {
         }
 
         if (techSystem.upgradeAIResearch()) {
+            // 💡 【修復核心】：直接扣除主公司資金，並同步更新子系統內部存儲的金額，防止舊金額覆蓋洗掉款項
+            double remainingCash = mainController.getPlayerCompany().getCash() - upgradeCost;
+            mainController.getPlayerCompany().setCash(remainingCash);
+            techSystem.setMoney(remainingCash);
+
             mainController.getPlayerCompany().recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 科技樹升級 - AI 實驗室 Lv." + techSystem.getAiResearchLevel() + "：-$" + mainController.formatMoney(upgradeCost));
 
             Platform.runLater(() -> {
@@ -142,7 +152,7 @@ public class TechPanelController {
                 alert.showAndWait();
             });
 
-            syncMoneyToMain();
+            mainController.updateStatusLabels(); // 即時重新整理頂部主要 NavBar 資金數據
             updateStatusLabels();
             loadPartnerUI();
         }
@@ -226,6 +236,16 @@ public class TechPanelController {
         }
 
         btnNegotiate.setOnAction(e -> {
+            // 🚨 火災即時攔截：防止玩家在事件觸發後仍能操作
+            if (techSystem.getFireLockdownTurns() > 0) {
+                Alert fireAlert = new Alert(Alert.AlertType.WARNING);
+                fireAlert.setTitle("廠房封鎖中");
+                fireAlert.setHeaderText(null);
+                fireAlert.setContentText("廠房火災封鎖重整中，無法進行任何商務談判！");
+                fireAlert.showAndWait();
+                loadPartnerUI();
+                return;
+            }
             boolean success;
             int toolsLevel = techSystem.getDesignToolsLevel();
             double protectionChance = toolsLevel * 0.25;
@@ -275,6 +295,16 @@ public class TechPanelController {
         btnSign.setStyle("-fx-background-color: #4E73DF; -fx-text-fill: #FFFFFF; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand;");
 
         btnSign.setOnAction(e -> {
+            // 🚨 火災即時攔截：防止玩家在事件觸發後仍能簽約
+            if (techSystem.getFireLockdownTurns() > 0) {
+                Alert fireAlert = new Alert(Alert.AlertType.WARNING);
+                fireAlert.setTitle("廠房封鎖中");
+                fireAlert.setHeaderText(null);
+                fireAlert.setContentText("廠房火災封鎖重整中，無法簽署任何新合約！");
+                fireAlert.showAndWait();
+                loadPartnerUI();
+                return;
+            }
             techSystem.signContract(contract);
             mainController.getPlayerCompany().recordTransaction(
                     "↳ [第 " + mainController.getCurrentDay() + " 天] 簽署供應鏈合約 - " + contract.getPartnerName()
@@ -308,8 +338,13 @@ public class TechPanelController {
 
     private void updateStatusLabels() {
         if (techSystem != null) {
-            lblYield.setText("AI 研究等級：Lv." + techSystem.getAiResearchLevel());
-            lblCost.setText("進行中合約：" + techSystem.getActiveContractsCount() + " 檔");
+            // 💡 【安全防護】：為 lblYield 與 lblCost 加上 null 判斷保護，徹底防範隨機產生的 NullPointerException
+            if (lblYield != null) {
+                lblYield.setText("AI 研究等級：Lv." + techSystem.getAiResearchLevel());
+            }
+            if (lblCost != null) {
+                lblCost.setText("進行中合約：" + techSystem.getActiveContractsCount() + " 檔");
+            }
 
             // 💡 核心改良：統一由這個變數來判定火災遮罩
             boolean isFire = techSystem.getFireLockdownTurns() > 0;

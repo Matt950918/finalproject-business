@@ -7,18 +7,33 @@
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="game.controller.BankPanelController"
       spacing="20" alignment="TOP_CENTER"
-      style="-fx-padding: 30; -fx-background-color: rgba(255, 255, 255, 0.45); -fx-background-radius: 20;"> <HBox alignment="CENTER_LEFT" style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-padding: 15 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 5);">
-    <Label fx:id="lblBankTitle" text="🏦 遠東國際放貸審核中心" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-    <Region HBox.hgrow="ALWAYS" />
-    <Label fx:id="lblLoanCount" text="待審核案件：0 件" style="-fx-font-size: 18px; -fx-text-fill: #666666;" />
-</HBox>
+      style="-fx-padding: 30; -fx-background-color: rgba(255,255,255,0.45); -fx-background-radius: 20;">
 
-    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
-        <VBox fx:id="loanListContainer" spacing="15" style="-fx-padding: 10; -fx-background-color: transparent;" />
+    <!-- 標題列 -->
+    <HBox alignment="CENTER_LEFT" styleClass="card"
+          style="-fx-background-color: #ffffff; -fx-background-radius: 15; -fx-padding: 15 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 5);">
+        <Label fx:id="lblBankTitle" text="🏦 遠東國際放貸審核中心"
+               style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333333;"
+               wrapText="true" />
+        <Region HBox.hgrow="ALWAYS" minWidth="20" />
+        <Label fx:id="lblLoanCount" text="待審核案件：0 件"
+               style="-fx-font-size: 16px; -fx-text-fill: #666666;"
+               minWidth="140" />
+    </HBox>
+
+    <!-- 貸款清單 -->
+    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
+                style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+        <VBox fx:id="loanListContainer" spacing="15"
+              style="-fx-padding: 5 5 10 5; -fx-background-color: transparent;" />
     </ScrollPane>
 
-    <HBox alignment="CENTER_RIGHT" spacing="20" style="-fx-background-color: #ebe9f4; -fx-background-radius: 15; -fx-padding: 15 25;">
-        <Label text="💡 身為 CEO，請謹慎評估客戶信用評分，高收益往往伴隨高違約風險。" style="-fx-font-size: 15px; -fx-text-fill: #555555;" />
+    <!-- 底部提示列 -->
+    <HBox alignment="CENTER_LEFT" spacing="20"
+          style="-fx-background-color: #EBE9F4; -fx-background-radius: 15; -fx-padding: 14 25;">
+        <Label text="💡 身為 CEO，請謹慎評估客戶信用評分，高收益往往伴隨高違約風險。"
+               style="-fx-font-size: 14px; -fx-text-fill: #5A5C69;"
+               wrapText="true" />
     </HBox>
 
 </VBox>

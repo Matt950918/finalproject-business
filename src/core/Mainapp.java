@@ -3,6 +3,7 @@ package core;
 import game.controller.MainGameController;
 import game.model.IndustryType;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -15,10 +16,8 @@ public class Mainapp extends Application {
 
     private static Stage primaryStage;
 
-    // 💡 確保是 public static，讓全案都能合法存取
     public static String globalCompanyName = "遠東集團";
 
-    // 💡 提供公開方法讓 MainMenuController 寫入名字
     public static void setGlobalCompanyName(String name) {
         globalCompanyName = name;
     }
@@ -26,23 +25,27 @@ public class Mainapp extends Application {
     @Override
     public void start(Stage stage) {
         primaryStage = stage;
+
+        primaryStage.setMinWidth(1100);
+        primaryStage.setMinHeight(700);
+        primaryStage.setMaximized(true);
+
         showHome();
     }
 
     public static void showHome() {
         try {
             Parent root = FXMLLoader.load(Mainapp.class.getResource("/game/view/MainMenu.fxml"));
-            primaryStage.setScene(new Scene(root, 900, 650));
-            primaryStage.setTitle("大老闆模擬器");
+            primaryStage.setScene(new Scene(root));
+            primaryStage.setTitle("大富翁創業模擬器");
+            primaryStage.setMaximized(false);
+            Platform.runLater(() -> primaryStage.setMaximized(true));
             primaryStage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * 🛠️ 修改：選擇公司類型的畫面，必須知道現在是要把新創的公司塞進哪一個槽位 (slotIndex)
-     */
     public static void showCompanySelect(int slotIndex) {
         Text title = new Text("請選擇公司類型");
         title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #5A5C69;");
@@ -58,7 +61,6 @@ public class Mainapp extends Application {
         backBtn.getStyleClass().add("switch-button");
         backBtn.setStyle("-fx-text-fill: #E74A3B;");
 
-        // 🎯 精準綁定：點擊按鈕時，除了傳入產業類型 (type)，也把指定好的 slotIndex 一併傳下去
         bankBtn.setOnAction(e -> enterCompany(IndustryType.BANK, slotIndex));
         techBtn.setOnAction(e -> enterCompany(IndustryType.TECH, slotIndex));
         bioBtn.setOnAction(e -> enterCompany(IndustryType.BIOTECH, slotIndex));
@@ -67,7 +69,7 @@ public class Mainapp extends Application {
         VBox root = new VBox(20, title, bankBtn, techBtn, bioBtn, backBtn);
         root.setStyle("-fx-alignment: center; -fx-padding: 40; -fx-background-color: #F4F6F9;");
 
-        Scene scene = new Scene(root, 900, 650);
+        Scene scene = new Scene(root);
         try {
             scene.getStylesheets().add(Mainapp.class.getResource("/game/view/global_theme.css").toExternalForm());
         } catch (Exception e) {
@@ -75,26 +77,25 @@ public class Mainapp extends Application {
         }
 
         primaryStage.setScene(scene);
+        primaryStage.setMaximized(false);
+        Platform.runLater(() -> primaryStage.setMaximized(true));
+        primaryStage.show();
     }
 
-    /**
-     * 🛠️ 修改：進入遊戲畫面方法，新增接收 slotIndex 參數
-     */
     public static void enterCompany(IndustryType type, int slotIndex) {
         try {
             FXMLLoader loader = new FXMLLoader(Mainapp.class.getResource("/game/view/MainGame.fxml"));
             Parent root = loader.load();
 
-            // 💡 讀取取好的公司名稱
             String userCompanyName = globalCompanyName;
-
-            // 取得主畫面的 Controller
             MainGameController controller = loader.getController();
-
-            // 🎯 重點修正：將槽位編號 slotIndex 灌入 startGame 方法，完成多存檔對接
             controller.startGame(userCompanyName, type, slotIndex);
 
-            primaryStage.setScene(new Scene(root, 900, 650));
+            primaryStage.setScene(new Scene(root));
+            primaryStage.setMaximized(false);
+            Platform.runLater(() -> primaryStage.setMaximized(true));
+            primaryStage.show();
+
         } catch (Exception e) {
             System.err.println("❌ 載入 MainGame.fxml 或初始化遊戲主畫面失敗！");
             e.printStackTrace();
