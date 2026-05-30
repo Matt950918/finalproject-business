@@ -7,7 +7,6 @@ public class Tech_Partner implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Random random = new Random();
 
-    // 15家知名的半導體、晶片大廠與AI科技巨頭清單
     private static final String[] UPSTREAM_COMPANIES = {
             "ASML艾司摩爾", "台積電TSMC", "應用材料AMAT", "東京威力科創TEL", "信越化學",
             "日月光ASE", "聯電UMC", "英特爾Intel"
@@ -40,22 +39,32 @@ public class Tech_Partner implements Serializable {
             "為其全新元宇宙眼鏡與硬體設備採購客製化低延遲影像顯示驅動晶片。"
     };
 
-    public static TechContract generateRandomContract() {
+    // 💡 核心變更：傳入 aiLevel 參數，讓合約價值隨科技動態放大！
+    public static TechContract generateRandomContract(int aiLevel) {
         boolean isUpstream = random.nextBoolean();
-        int idx = random.nextInt(8); // 隨機抽取 8 種不同的公司與說明
+        int idx = random.nextInt(8);
+
+        // 🚀 科技規模乘數：Lv.0 就是 1 倍，Lv.1 是 1.5 倍，Lv.4 直接暴增 3 倍市場規模！
+        double multiplier = 1.0 + (aiLevel * 0.5);
 
         if (isUpstream) {
             String partner = UPSTREAM_COMPANIES[idx];
             String desc = UPSTREAM_DESCRIPTIONS[idx];
-            // 上游採購：只有成本，營收為 0
-            double cost = 2_000_000 + random.nextInt(3_000_000);
-            int duration = 5 + random.nextInt(6); // 5 到 10 期
+
+            // 🔪 大砍底層數值：初始只剩 20萬 ~ 50萬，再乘上科技倍率
+            double baseCost = 200_000 + random.nextInt(300_000);
+            double cost = baseCost * multiplier;
+
+            int duration = 5 + random.nextInt(6);
             return new TechContract(partner, desc, 0, cost, duration);
         } else {
             String partner = DOWNSTREAM_COMPANIES[idx];
             String desc = DOWNSTREAM_DESCRIPTIONS[idx];
-            // 下游供應：只有營收，成本為 0
-            double revenue = 4_000_000 + random.nextInt(6_000_000);
+
+            // 🔪 大砍底層數值：初始只剩 40萬 ~ 100萬，再乘上科技倍率
+            double baseRevenue = 400_000 + random.nextInt(600_000);
+            double revenue = baseRevenue * multiplier;
+
             int duration = 5 + random.nextInt(6);
             return new TechContract(partner, desc, revenue, 0, duration);
         }

@@ -35,36 +35,31 @@ public class TechPanelController {
         this.techSystem = techSystem;
         this.mainController = mainController;
 
-        // 🎯 1. 核心修復：如果工廠火災停業中，強制把右側所有研發、系統升級按鈕全部關閉！
+        // 🛠️ 【資金同步】：確保子系統即時同步主公司的最新資金
+        if (mainController != null && mainController.getPlayerCompany() != null) {
+            this.techSystem.setMoney(mainController.getPlayerCompany().getCash());
+        }
+
+        // 🎯 1. 標題火災狀態控制（按鈕狀態已移至底端 updateStatusLabels 統一管理）
         if (techSystem.getFireLockdownTurns() > 0) {
             if (lblTechTitle != null) {
                 lblTechTitle.setText(mainController.getPlayerCompany().getName() + " - 🚨 廠房火災封鎖重整中！");
-                lblTechTitle.setStyle("-fx-text-fill: #c0392b; -fx-font-weight: bold;"); // 變成火災紅
-            }
-
-            if (btnBuyEDA != null) {
-                btnBuyEDA.setDisable(true);
-                btnBuyEDA.setText("🚨 工廠重整中：暫停晶片系統升級");
-            }
-            if (btnUpgradeAI != null) {
-                btnUpgradeAI.setDisable(true);
-                btnUpgradeAI.setText("🚨 工廠重整中：暫停 AI 實驗室研發");
+                lblTechTitle.setStyle("-fx-text-fill: #c0392b; -fx-font-weight: bold;"); // 火災紅
             }
         } else {
-            // 火災過去了，恢復原本正常的標題與按鈕狀態
             if (lblTechTitle != null) {
                 lblTechTitle.setText(mainController.getPlayerCompany().getName() + " - 晶片半導體主控台");
                 lblTechTitle.setStyle("");
             }
         }
 
-        // 🎯 2. 核心修復：不論是不是今天刷新的合約，一律在這裡強迫重新載入一次左邊的 UI 列表！
-        if (availableContracts.isEmpty() && lastRefreshDay != mainController.getCurrentDay()) {
+        // 🎯 2. 【市場刷新】：天數改變或合約庫空了，一律強制刷新
+        if (lastRefreshDay != mainController.getCurrentDay() || availableContracts.isEmpty()) {
             refreshAvailableContracts();
             lastRefreshDay = mainController.getCurrentDay();
         }
 
-        // 🔥 關鍵：確保這行在 initData 的最下面被呼叫
+        // 🔥 關鍵：確保 UI 渲染與標籤更新在最後執行
         loadPartnerUI();
         updateStatusLabels();
     }
@@ -79,7 +74,8 @@ public class TechPanelController {
     private void refreshAvailableContracts() {
         availableContracts.clear();
         for (int i = 0; i < 3; i++) {
-            availableContracts.add(Tech_Partner.generateRandomContract());
+            // 這裡把 AI 等級傳進去！
+            availableContracts.add(Tech_Partner.generateRandomContract(techSystem.getAiResearchLevel()));
         }
     }
 
@@ -194,9 +190,6 @@ public class TechPanelController {
         descLbl.setStyle("-fx-text-fill: #5A5C69; -fx-font-size: 13px;");
         descLbl.setWrapText(true);
 
-        // =======================================================
-        // 🎯 核心語意優化：杜絕「淨利為負數」的低級商業直覺錯誤
-        // =======================================================
         StringBuilder financeInfo = new StringBuilder();
         if (isUpstream) {
             financeInfo.append("每期授權費用支出: $").append(mainController.formatMoney(contract.getCost())).append("\n");
@@ -219,8 +212,6 @@ public class TechPanelController {
         btnNegotiate.setStyle("-fx-background-color: #f6f6f6; -fx-text-fill: #4e73df; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-border-color: #4e73df; -fx-border-radius: 6;");
 
         double baseRate = isUpstream ? 0.35 : 0.25;
-
-        // 🎯【優化一】：透過 Math.min(100, ...) 進行介面安全封頂，絕不讓 Labeled 介面爆出 115% 等不合理數字
         int currentWinRate = Math.min(100, (int)((baseRate + (techSystem.getAiResearchLevel() * 0.05)) * 100));
 
         if (isUpstream) {
@@ -310,7 +301,6 @@ public class TechPanelController {
 
     private void syncMoneyToMain() {
         if (mainController != null && mainController.getPlayerCompany() != null) {
-            // 🎯【優化二】：修正致命的先扣光再加回 Bug，直接精準同步子系統的實時資金，安全且絕不歸零
             mainController.getPlayerCompany().setCash(techSystem.getMoney());
             mainController.updateStatusLabels();
         }
@@ -321,12 +311,21 @@ public class TechPanelController {
             lblYield.setText("AI 研究等級：Lv." + techSystem.getAiResearchLevel());
             lblCost.setText("進行中合約：" + techSystem.getActiveContractsCount() + " 檔");
 
+            // 💡 核心改良：統一由這個變數來判定火災遮罩
+            boolean isFire = techSystem.getFireLockdownTurns() > 0;
+
+            // ==========================================
+            // 上方：自研晶片設計系統按鈕
+            // ==========================================
             if (btnBuyEDA != null) {
                 int currentLvl = techSystem.getDesignToolsLevel();
                 double nextCost = techSystem.getDesignToolsUpgradeCost();
                 int currentRate = Math.min(100, currentLvl * 25);
 
-                if (currentLvl >= 4) {
+                if (isFire) {
+                    btnBuyEDA.setText("🚨 工廠重整中：暫停晶片系統升級");
+                    btnBuyEDA.setDisable(true);
+                } else if (currentLvl >= 4) {
                     btnBuyEDA.setText(String.format("設計系統已達頂級 Lv.%d (100%% 保底)", currentLvl));
                     btnBuyEDA.setDisable(true);
                 } else {
@@ -336,10 +335,20 @@ public class TechPanelController {
                 }
             }
 
+            // ==========================================
+            // 下方：AI 實驗室按鈕
+            // ==========================================
             if (btnUpgradeAI != null) {
                 double cost = 1000000 * Math.pow(2, techSystem.getAiResearchLevel());
-                btnUpgradeAI.setText(String.format("升級 AI 實驗室 (Lv.%d ➔ Lv.%d) | 費用: $%s",
-                        techSystem.getAiResearchLevel(), techSystem.getAiResearchLevel() + 1, mainController.formatMoney(cost)));
+
+                if (isFire) {
+                    btnUpgradeAI.setText("🚨 工廠重整中：暫停 AI 實驗室研發");
+                    btnUpgradeAI.setDisable(true);
+                } else {
+                    btnUpgradeAI.setText(String.format("升級 AI 實驗室 (Lv.%d ➔ Lv.%d) | 費用: $%s",
+                            techSystem.getAiResearchLevel(), techSystem.getAiResearchLevel() + 1, mainController.formatMoney(cost)));
+                    btnUpgradeAI.setDisable(false);
+                }
             }
         }
     }
