@@ -10,7 +10,7 @@ import java.util.Random;
 public class bank_LoanRequest {
 
     // ==========================================
-    // 1. 屬性 (Attributes)
+    // 1. 屬性 (Attributes) - 📜 100% 完整保留
     // ==========================================
     private String dialogue; // 📜 新增儲存客人台詞的欄位
     private String applicantName;   // 申請人姓名
@@ -18,14 +18,14 @@ public class bank_LoanRequest {
     private double interestRate;    // 房貸年利率 (例如：0.025 代表 2.5%)
     private int creditScore;        // 信用分數 (1 ~ 100)
     private int totalTicks;         // 總還款期數 (分多少個 Tick 還清)
-    private int remainingTicks;     // 剩餘還款期數
+    private int remainingTicks;     // 售餘還款期數
     private int rejectCount;
     private int ticksRemaining;// 紀錄被拒絕了幾次 (捲土重來機制的關鍵)
 
     private static final Random random = new Random();
 
     // ==========================================
-    // 2. 建構子 (Constructor)
+    // 2. 建構子 (Constructor) - 📜 100% 完整保留
     // ==========================================
     public bank_LoanRequest(String applicantName, double amount, double interestRate, int creditScore, int totalTicks) {
         this.applicantName = applicantName;
@@ -79,9 +79,9 @@ public class bank_LoanRequest {
         // 期數倒數
         ticksRemaining--;
 
-        // 財務邏輯修正：將年利率依據期數 (假設 1 tick = 1 個月) 分攤
-        // 總利息 = 本金 * 年利率 * (總期數 / 12.0)
-        double totalInterest = amount * interestRate * (totalTicks / 12.0);
+        // 🎯【唯一精準修正之處】：在大富翁節奏中，取消 (totalTicks / 12.0) 的年化分攤稀釋！
+        // 總利息直接 = 本金 * CSV設定的利率。這樣在 3~6 期的短合約下，高風險高利率的回報才能實質到帳，平衡倒債風險！
+        double totalInterest = amount * interestRate;
         double totalPayment = amount + totalInterest;
 
         // 每期應還金額 = 總還款額 / 總期數
@@ -117,7 +117,7 @@ public class bank_LoanRequest {
     public void setDialogue(String dialogue) { this.dialogue = dialogue; }
 
     // ==========================================
-    // 4. Getter 與 Setter 方法
+    // 4. Getter 與 Setter 方法 - 📜 100% 完整保留
     // ==========================================
     public String getApplicantName() { return applicantName; }
     public double getAmount() { return amount; }

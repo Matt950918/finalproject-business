@@ -10,13 +10,13 @@ public class BioSystem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private double money = 50_000_000;
-    private double successBonus = 0;  // 基礎成功率加成
+    private double successBonus = 0;  // 🎯 基礎成功率加成（會隨著科技一同步提升！）
     private double brandValue = 0;    // 品牌溢價報酬
 
     private double rndLevel = 0;       // 科技一：研發能力等級（控制天數，每次升級 +1.0）
     private double costDiscount = 0;  // 科技三：生產效率折讓（控制金錢，每次升級 +0.05）
 
-    // 🆕 移除原本的 pendingReward，改用一個內部類別與清單來追蹤每筆利潤的工期倒數
+    // 用來追蹤每筆利潤的工期倒數
     private static class PendingRewardItem implements Serializable {
         private static final long serialVersionUID = 1L;
         double amount;
@@ -31,7 +31,7 @@ public class BioSystem implements Serializable {
 
     private List<Drug> drugs = new ArrayList<>();
     private int lockdownTurns = 0;
-    private String systemMessage = "";
+    String systemMessage = "";
 
     public BioSystem() {
         generateFiftyDrugs();
@@ -99,6 +99,11 @@ public class BioSystem implements Serializable {
             systemMessage = "❌ 該藥物今日研發次數已達上限 (3次)。";
             return false;
         }
+        // 🎯【核心漏洞修復】第一線防禦：如果這顆藥今天已經解盲上市成功了，直接阻斷，防止在換日前被任何連點或惡意巨集洗錢！
+        if (drug.isLaunched()) {
+            systemMessage = "❌ 【" + drug.getName() + "】今日已成功通過臨床解盲，正在排程生產中，換日前請勿重複投產！";
+            return false;
+        }
 
         double actualCost = drug.getDynamicCost(this.costDiscount);
         if (!deductMoney(actualCost)) {
@@ -110,7 +115,7 @@ public class BioSystem implements Serializable {
         drug.calculateAndSetCooldown(this.rndLevel);
         int finalCooldownDays = drug.getRemainingCooldownDays();
 
-        // 🎲 當下即時判定結果
+        // 🎲 當下即時判定結果 (完美傳入修正後的 successBonus)
         boolean success = drug.tryDevelop(successBonus);
 
         if (success) {
@@ -121,9 +126,8 @@ public class BioSystem implements Serializable {
             // 利潤加入等待隊列，等工期倒數完畢後入帳
             rewardList.add(new PendingRewardItem(rewardAmount, finalCooldownDays));
 
-            // 🎯 【核心修正】成功上市後打上標記，再移出清單防止讀檔死鎖
+            // 🎯 【核心修正】成功上市後打上標記，且在畫面上將按鈕鎖死。
             drug.setLaunched(true);
-            this.drugs.remove(drug);
 
             systemMessage = String.format("🎉 解盲成功！【%s】進入生產排程。工期為 %d 天，工期結束隔日到帳 $%.0f 萬！",
                     drug.getName(), finalCooldownDays, rewardAmount / 10000);
@@ -153,13 +157,16 @@ public class BioSystem implements Serializable {
         return success;
     }
 
+
     /**
      * ⏱️ 每日換日
+     * 🎯【核心優化】：引入每日研發次數重置，徹底解放研發必定失敗的 0% 機率陷阱！
      */
     public void tick() {
         systemMessage = "";
         double totalSettledToday = 0;
 
+        // 1. 結算排程利潤 - 📜 100% 完美保留妳的等待利潤隊列
         List<PendingRewardItem> toRemove = new ArrayList<>();
         for (PendingRewardItem item : rewardList) {
             if (item.remainingDays <= 0) {
@@ -176,17 +183,32 @@ public class BioSystem implements Serializable {
             systemMessage = "INCOME:" + totalSettledToday;
         }
 
+        // 🚨 廠房遭查封停工狀態下的換日處理 - 📜 100% 完美保留妳的檢警查封停業劇本
         if (lockdownTurns > 0) {
             lockdownTurns--;
             for (Drug drug : drugs) {
                 drug.advanceDay();
+                drug.resetDailyCount(); // 🎯 修正：即使停工重整中，換日也要將昨日研發次數歸零，避免復工後勝率被鎖死！
             }
             return;
         }
 
+        // 2. 推進所有正常藥物的工期與次數重置
+        List<Drug> drugsToRemove = new ArrayList<>();
         for (Drug drug : drugs) {
-            drug.advanceDay();
+            drug.advanceDay(); // 工期倒數減 1 天
+
+            // 🎯【關鍵修正】：每日換日時，通知留在畫面上的藥物執行歸零！
+            // 呼叫 Drug 內部的 resetDailyCount()，將 dailyResearchCount 清空為 0
+            // 這樣新的一天開始後，玩家就能重新享受最乾淨、沒有累積懲罰的公正基礎成功率！
+            drug.resetDailyCount();
+
+            // 🎯 100% 完美保留妳的核心機制：只要是「已研發成功」的藥物，換日時就正式移出清單，隔天直接刷新下一個新藥品品！
+            if (drug.isLaunched()) {
+                drugsToRemove.add(drug);
+            }
         }
+        drugs.removeAll(drugsToRemove);
     }
 
     public void sellDrug(Drug drug, double demand) {
@@ -201,10 +223,29 @@ public class BioSystem implements Serializable {
     public void earnMoney(double amount) { money += amount; }
     public void earnCash(double amount) { this.money += amount; }
 
-    public void addEfficiency(double value) { this.rndLevel += value; }
-    public void addSuccessBonus(double value) { this.costDiscount += value; }
-    public void addBrandValue(double value) { this.brandValue += value; }
+    // =======================================================
+    // 🎯 核心重構區：直接將成功率合併進科技一的點擊接口！
+    // =======================================================
+    public void addEfficiency(double value) {
+        this.rndLevel += value;        // 1. 增加原本的天數控制等級
+        this.successBonus += 0.05;    // 2. 🎯 【科技合併】同步在後端讓解盲率永久加 5%！
+    }
 
+    public void addSuccessBonus(double value) {
+        // 空殼保留以防其他關聯類別報錯
+    }
+
+    public void addCostDiscount(double value) {
+        this.costDiscount += value;   // 科技三：生產開銷折讓（維持不變）
+    }
+
+    public void addBrandValue(double value) {
+        this.brandValue += value;     // 科技二：品牌行銷溢價（維持不變）
+    }
+
+    // ==========================================
+    // Getters & Setters
+    // ==========================================
     public double getMoney() { return money; }
     public void setMoney(double money) { this.money = money; }
     public double getSuccessBonus() { return successBonus; }

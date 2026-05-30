@@ -219,7 +219,9 @@ public class TechPanelController {
         btnNegotiate.setStyle("-fx-background-color: #f6f6f6; -fx-text-fill: #4e73df; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-border-color: #4e73df; -fx-border-radius: 6;");
 
         double baseRate = isUpstream ? 0.35 : 0.25;
-        int currentWinRate = (int)((baseRate + (techSystem.getAiResearchLevel() * 0.05)) * 100);
+
+        // 🎯【優化一】：透過 Math.min(100, ...) 進行介面安全封頂，絕不讓 Labeled 介面爆出 115% 等不合理數字
+        int currentWinRate = Math.min(100, (int)((baseRate + (techSystem.getAiResearchLevel() * 0.05)) * 100));
 
         if (isUpstream) {
             btnNegotiate.setText(String.format("嘗試向大廠砍價 (成功率: %d%%)", currentWinRate));
@@ -308,8 +310,8 @@ public class TechPanelController {
 
     private void syncMoneyToMain() {
         if (mainController != null && mainController.getPlayerCompany() != null) {
-            mainController.getPlayerCompany().spendCash(mainController.getPlayerCompany().getCash());
-            mainController.getPlayerCompany().earnCash(techSystem.getMoney());
+            // 🎯【優化二】：修正致命的先扣光再加回 Bug，直接精準同步子系統的實時資金，安全且絕不歸零
+            mainController.getPlayerCompany().setCash(techSystem.getMoney());
             mainController.updateStatusLabels();
         }
     }

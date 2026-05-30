@@ -47,6 +47,9 @@ public class MainGameController {
     private boolean gachaUsedYesterday = false;
     private boolean gachaAvailableToday = false;
 
+    // 🎯 用來判斷當前彈窗是「隨機突發消息」還是「真正的日終結算」
+    private boolean isEndOfDaySettlement = false;
+
     // 底層系統
     private bank_system bankSystem = new bank_system();
     private game.model.bio.BioSystem bioSystem = new game.model.bio.BioSystem();
@@ -147,12 +150,9 @@ public class MainGameController {
         }
     }
 
-    /**
-     * 🛠️ 修改：startGame 新增傳入選取的存檔槽位 slotIndex
-     */
     public void startGame(String customName, IndustryType selectedIndustry, int slotIndex) {
-        this.currentSlotIndex = slotIndex; // 鎖定槽位
-        PlayerData sessionData = MainMenuController.activeProgress; // 這裡通常是玩家點選槽位後包好的對象
+        this.currentSlotIndex = slotIndex;
+        PlayerData sessionData = MainMenuController.activeProgress;
 
         if (sessionData != null && sessionData.getCompany() != null && sessionData.getDay() > 0) {
             System.out.println("📂 [進度載入] 成功載入 Slot [" + slotIndex + "] 歷史存檔，產業: " + sessionData.getCompany().getIndustry());
@@ -190,13 +190,9 @@ public class MainGameController {
         startNewDay();
     }
 
-    /**
-     * 🛠️ 修改：配合多槽位核心存檔機制重構
-     */
     private void saveCurrentProgress() {
         PlayerData sessionData = MainMenuController.activeProgress;
         if (sessionData != null && playerCompany != null) {
-            // 同步最新的各產業資產到公司物件上
             if (playerCompany.getIndustry() == IndustryType.BANK) playerCompany.setCash(bankSystem.getMoney());
             else if (playerCompany.getIndustry() == IndustryType.BIOTECH) playerCompany.setCash(bioSystem.getMoney());
             else if (playerCompany.getIndustry() == IndustryType.TECH) playerCompany.setCash(techSystem.getMoney());
@@ -205,7 +201,6 @@ public class MainGameController {
             sessionData.setMoney(this.playerCompany.getCash());
             sessionData.setDay(this.currentDay);
 
-            // 🎯 重點修正：改為調用具備槽位參數的 saveSlotProgress 方法
             PlayerAccount.saveSlotProgress(sessionData.getUsername(), this.currentSlotIndex, sessionData);
         }
     }
@@ -222,25 +217,22 @@ public class MainGameController {
     private void startNewDay() {
         currentDay++;
 
-        // 🎯 核心終局攔截：如果 currentDay 超過 50（代表剛結束第 50 天營業）
+        // 🌅 進入新的一天，重置日終結算旗標
+        this.isEndOfDaySettlement = false;
+
         if (this.currentDay > 50) {
-            // 1. 強制把背景倒數計時器關掉
             if (timeline != null) {
                 timeline.stop();
             }
 
-            // 2. 徹底關閉所有可能會殘留的滿版遮罩層（杜絕白色、黑色滿版發白問題）
             if (resultOverlay != null) resultOverlay.setVisible(false);
             if (newsOverlay != null) newsOverlay.setVisible(false);
 
-            // 3. 確保大層完全解鎖，允許點擊
             if (mainGameLayer != null) mainGameLayer.setDisable(false);
             if (industryContentArea != null) industryContentArea.setDisable(false);
 
-            // 4. 自動幫玩家把最終成績存檔
             saveCurrentProgress();
 
-            // 5. 彈出大富翁風格的終局結算對話盒
             javafx.application.Platform.runLater(() -> {
                 javafx.scene.control.Alert gameOverAlert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
                 gameOverAlert.setTitle("🏁 50 天商業帝國任期圓滿結束！");
@@ -253,7 +245,7 @@ public class MainGameController {
                 if (finalCash >= 100000000) {
                     comment = "🎉 簡真是商業神話！您成功打造了市值通天的超級企業巨頭！";
                 } else if (finalCash >= 50000000) {
-                    comment = "✨ 經營有方！您的企業已經成為園區內不容忽視的強大中流砥柱！";
+                    comment = "✨ 經營有方！您的企業已經成為園園區內不容忽視的強大中流佇柱！";
                 } else if (finalCash > 0) {
                     comment = "☕ 穩健經營！您成功帶領全體員工挺過了 50 天的商海風暴！";
                 } else {
@@ -270,13 +262,10 @@ public class MainGameController {
                 ));
 
                 gameOverAlert.getDialogPane().setStyle("-fx-border-color: #3498db; -fx-border-width: 4px; -fx-background-color: #f7f9fa; -fx-font-family: 'Microsoft JhengHei';");
-                // 🎯 1. 核心修正：將對話框面板拉寬到 550 像素（保證寬度足夠）
                 gameOverAlert.getDialogPane().setPrefWidth(550);
 
-                // 🎯 2. 正確換行修正：從對話框中抓出真正的文字 Label 節點，並對它設定自動換行
                 javafx.scene.Node contentLabel = gameOverAlert.getDialogPane().lookup(".content.markdown-writer-node");
                 if (contentLabel == null) {
-                    // 如果用 class 找不到，就改用一般的文字區域 lookup 抓法
                     contentLabel = gameOverAlert.getDialogPane().lookup(".content.label");
                 }
                 if (contentLabel instanceof javafx.scene.control.Label) {
@@ -284,28 +273,23 @@ public class MainGameController {
                 }
                 gameOverAlert.showAndWait();
 
-                // 6. 點擊確認後，精準切換至排行榜，並同步頂部真實資產數值
                 handleLoadRanking(null);
                 updateStatusLabels();
 
-                // 🎯 核心修正：破關後強行把「返回公司經營」按鈕拔掉！
                 if (industryContentArea != null) {
-                    // 透過 CSS Selector 尋找排行榜面板內寫著「返回公司經營」或 fx:id 的按鈕
-                    // 如果你在 FXML 裡有給它 id（例如 btnBackToGame），也可以直接去 RankingController 裡拔
-                    // 這裡最安全、不用改 FXML 的暴力抓法是直接搜尋該區域內所有的 Button：
                     for (javafx.scene.Node node : industryContentArea.lookupAll(".button")) {
                         if (node instanceof javafx.scene.control.Button) {
                             javafx.scene.control.Button btn = (javafx.scene.control.Button) node;
                             if (btn.getText().contains("返回公司經營") || btn.getText().contains("BACK")) {
-                                btn.setVisible(false); // 徹底隱藏，不留痕跡！
-                                btn.setDisable(true);  // 雙重保險防點擊
+                                btn.setVisible(false);
+                                btn.setDisable(true);
                             }
                         }
                     }
                 }
             });
 
-            return; // 🎯 致命阻斷！絕對不讓程式碼往下跑隨機新聞與其他重新載入邏輯！
+            return;
         }
         if (playerCompany != null) {
             playerCompany.decrementBuffTurns();
@@ -377,8 +361,6 @@ public class MainGameController {
             DailyNews todayNews = NewsDatabase.getRandomNewsFor(playerCompany.getIndustry());
             if (todayNews != null) showNewsPopup(todayNews);
         }
-
-
     }
 
     private void loadBankPanel() {
@@ -475,24 +457,38 @@ public class MainGameController {
             btn.getStyleClass().add("switch-button");
             btn.setOnAction(e -> {
                 newsOverlay.setVisible(false);
-                handleOptionSelected(option);
+                handleOptionSelected(option); // 🎯 點選新聞選項
             });
             optionsBox.getChildren().add(btn);
         }
         newsOverlay.setVisible(true);
-        timeline.pause();
+        timeline.pause(); // 突發消息跳出時，先暫停白天的倒數
     }
 
-    @FXML private void handleSkipDay(ActionEvent event) { if (newsOverlay != null) newsOverlay.setVisible(false); timeline.play(); }
-    private void handleTimeout() { handleOptionSelected(null); }
-    @FXML private void handleEndDay(ActionEvent event) { handleOptionSelected(null); }
+    @FXML
+    private void handleSkipDay(ActionEvent event) {
+        if (newsOverlay != null) newsOverlay.setVisible(false);
+        timeline.play();
+    }
+
+    // 倒數時間到換日、或者主動點擊換日，明確標記為「日終大結算」
+    private void handleTimeout() {
+        this.isEndOfDaySettlement = true;
+        handleOptionSelected(null);
+    }
+
+    @FXML
+    private void handleEndDay(ActionEvent event) {
+        this.isEndOfDaySettlement = true;
+        handleOptionSelected(null);
+    }
 
     private void handleOptionSelected(NewsOption selectedOption) {
+        // 如果 selectedOption 存在，表示這是白天的隨機新聞抉難，isEndOfDaySettlement 依然是 false
         timeline.stop();
         double oldPrice = playerCompany.getStockPrice();
         MarketEvent resultEvent = (selectedOption != null) ? selectedOption.execute(playerCompany) : null;
 
-        // 🆕 【精準攔截連動】：如果結果名稱包含「火災停業」，強迫科技系統啟動 3 天停業
         if (resultEvent != null && resultEvent.getName() != null && resultEvent.getName().contains("火災停業")) {
             if (techSystem != null) {
                 techSystem.triggerFireLockdown(3);
@@ -506,7 +502,9 @@ public class MainGameController {
         else if (playerCompany.getIndustry() == IndustryType.BIOTECH) bioSystem.setMoney(playerCompany.getCash());
         else if (playerCompany.getIndustry() == IndustryType.TECH) techSystem.setMoney(playerCompany.getCash());
 
-        updateStatusLabels();
+        // 🎯 核心修復：把 updateStatusLabels() 從這裡移除！
+        // 絕對不要在隨機新聞剛點完時就提早去刷面板，避免火災時 TechPanelController 提早加載渲染出簽約卡片
+
         String msg = (selectedOption == null) ? "今日營業時間結束，市場結算完畢。" : ((resultEvent != null) ? resultEvent.getName() : "公司維持穩定經營，市場無重大消息。");
         showResultPopup(msg, oldPrice, playerCompany.getStockPrice());
     }
@@ -540,7 +538,26 @@ public class MainGameController {
         resultOverlay.setVisible(false);
         mainGameLayer.setDisable(false);
         saveCurrentProgress();
-        startNewDay();
+
+        if (playerCompany.getCash() <= 0) {
+            checkBankruptcy();
+            return;
+        }
+
+        // 🎯 核心修復：等玩家真正把結果視窗（如火災損失報告）點擊確定關掉了，此時才安全地去刷新 UI！
+        // 這時如果處於火災期間，TechPanelController 就會精確讀到重整狀態，並完美封鎖談判與簽約介面
+        updateStatusLabels();
+
+        // 🎯 核心控制分流
+        if (this.isEndOfDaySettlement) {
+            // 情況一：如果真的是時間到、或手動點擊結束本日營業，才推進到下一天
+            System.out.println("⏳ 今日營業大結算完成，推進天數。");
+            startNewDay();
+        } else {
+            // 情況二：這只是白天的突發隨機事件處理完畢，釋放 UI 面板，讓玩家繼續留在當天操作
+            System.out.println("📰 突發事件處理完畢，返回當前第 " + currentDay + " 天主畫面。");
+            timeline.play(); // 恢復時間倒數，繼續過完今天
+        }
     }
 
     public String formatMoney(double amount) {
@@ -629,26 +646,21 @@ public class MainGameController {
     }
 
     /**
-     * 🆕 新增：點擊「返回主選單」按鈕時的處理邏輯
-     * 退出目前玩家的經營畫面，退回到最開頭的主選單
+     * 點擊「返回主選單」按鈕時的處理邏輯
      */
     @FXML
     private void handleReturnToMainMenu(javafx.event.ActionEvent event) {
-        // 1. 停止當前天數的倒數計時器，避免背景繼續跑
         if (timeline != null) {
             timeline.stop();
         }
 
-        // 2. 自動幫玩家把目前的產業進度存檔，防止資料遺失
         saveCurrentProgress();
         System.out.println("💾 已自動保存當前產業進度，準備返回主選單。");
 
         try {
-            // 3. 重新載入 MainMenu.fxml 畫面
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/game/view/MainMenu.fxml"));
             javafx.scene.Parent root = loader.load();
 
-            // 4. 切換 Scene
             javafx.stage.Stage stage = (Stage) lblDay.getScene().getWindow();
             stage.setScene(new javafx.scene.Scene(root));
             stage.show();
@@ -657,6 +669,92 @@ public class MainGameController {
         } catch (Exception e) {
             System.err.println("❌ 載入 MainMenu.fxml 失敗！");
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 🏁 宣告遊戲結束（比照 51 天規格）
+     */
+    private void triggerGameOver(String reason) {
+        if (timeline != null) {
+            timeline.stop();
+        }
+        if (resultOverlay != null) resultOverlay.setVisible(false);
+        if (newsOverlay != null) newsOverlay.setVisible(false);
+        if (mainGameLayer != null) mainGameLayer.setDisable(false);
+        if (industryContentArea != null) industryContentArea.setDisable(false);
+
+        saveCurrentProgress();
+
+        javafx.application.Platform.runLater(() -> {
+            javafx.scene.control.Alert gameOverAlert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+            gameOverAlert.setTitle(" 遊戲結束 ");
+            gameOverAlert.setHeaderText(" 公司宣告破產，遊戲結束 ");
+
+            double finalCash = playerCompany.getCash();
+            double finalStockPrice = playerCompany.getStockPrice();
+
+            gameOverAlert.setContentText(String.format(
+                    " 結算原因: %s\n\n" +
+                            " 最終資產: $%s\n" +
+                            " 最終股價: $%.2f\n\n" +
+                            " 遺憾！您未能挽回公司的頹勢，最終走向破產一途。歡迎再次挑戰！",
+                    reason, formatMoney(finalCash), finalStockPrice
+            ));
+
+            gameOverAlert.getDialogPane().setStyle("-fx-border-color: #e74a3b; -fx-border-width: 4px; -fx-background-color: #fdf2f2; -fx-font-family: 'Microsoft JhengHei';");
+            gameOverAlert.getDialogPane().setPrefWidth(550);
+
+            // 確保文字自動換行
+            javafx.scene.Node contentLabel = gameOverAlert.getDialogPane().lookup(".content.label");
+            if (contentLabel instanceof javafx.scene.control.Label) {
+                ((javafx.scene.control.Label) contentLabel).setWrapText(true);
+            }
+
+            gameOverAlert.showAndWait();
+
+            // 導向排行榜並停用返回按鈕
+            handleLoadRanking(null);
+            updateStatusLabels();
+            if (industryContentArea != null) {
+                for (javafx.scene.Node node : industryContentArea.lookupAll(".button")) {
+                    if (node instanceof javafx.scene.control.Button) {
+                        javafx.scene.control.Button btn = (javafx.scene.control.Button) node;
+                        if (btn.getText().contains("返回") || btn.getText().contains("BACK")) {
+                            btn.setVisible(false);
+                            btn.setDisable(true);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * ⚠️ 檢查是否破產與執行逆天改命機制
+     */
+    public void checkBankruptcy() {
+        if (playerCompany.getCash() <= 0) {
+            // 檢查是否已經使用過逆天改命機會
+            if (!playerCompany.isHasBankrupted()) {
+                playerCompany.setHasBankrupted(true);
+
+                // 彈出提示，告知玩家將強制執行一次機會命運
+                javafx.application.Platform.runLater(() -> {
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+                    alert.setTitle(" 破產危機！");
+                    alert.setHeaderText(" 公司資金已然見底！");
+                    alert.setContentText(" 觸發特別機制：系統將強制為您執行一次【機會命運】！\n 這是您最後的翻盤機會，如果依然無法讓資金轉正，遊戲將直接結束！");
+                    alert.getDialogPane().setStyle("-fx-font-family: 'Microsoft JhengHei';");
+                    alert.showAndWait();
+
+                    // 強制切換到 Gacha 畫面並自動執行
+                    handleLoadGacha(null);
+                });
+            } else {
+                // 已經破產過，且這次還是沒錢 -> 宣告遊戲結束
+                triggerGameOver(" 機會命運未能救回公司財政，資金依舊為負。");
+            }
         }
     }
 }

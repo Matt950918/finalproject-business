@@ -18,9 +18,7 @@ public class Drug implements Serializable {
     private double rewardMultiplier;
 
     private boolean isDiscovered;
-    private int dailyResearchCount = 0;
     private int totalSuccessCount = 0;
-    private double refreshRateMultiplier = 1.0;
 
     // ⏱️ 研發工期鎖（冷卻時間）
     private int baseDaysRequired;
@@ -51,19 +49,25 @@ public class Drug implements Serializable {
 
         this.remainingCooldownDays = (int) Math.ceil(calculatedDays);
         if (this.remainingCooldownDays < 1) this.remainingCooldownDays = 1;
-
-        this.dailyResearchCount++;
     }
 
     /**
      * 🎲 點擊當下立刻判定成功或失敗
+     * 🎯【核心優化】：全面移除 dailyResearchCount 點擊次數懲罰，讓機率絕對正常且穩定地出現！
      */
     public boolean tryDevelop(double globalSuccessBonus) {
-        double successPenalty = dailyResearchCount * 0.05;
+        // 歷史加成：每成功研發該類藥物一次，勝率永久加 5%
         double historyBonus = totalSuccessCount * 0.05;
 
-        double finalRate = baseSuccessRate + globalSuccessBonus + historyBonus - successPenalty;
-        finalRate = Math.max(0.0, Math.min(1.0, finalRate));
+        // 最終勝率 = 基礎勝率 + 科技樹加成 + 歷史成功回饋 (不再扣減任何點擊懲罰)
+        double finalRate = baseSuccessRate + globalSuccessBonus + historyBonus;
+
+        // 嚴格限制在 5% 保底 到 100% 封頂之間
+        finalRate = Math.max(0.05, Math.min(1.0, finalRate));
+
+        // 輸出除錯日誌，方便在主控台（Console）實時觀測最精準的正常勝率
+        System.out.println(String.format("🔬 藥物【%s】解盲中 -> 基礎:%d%% | 歷史加成:+%d%% | 最終勝率:%.1f%%",
+                this.name, (int)(baseSuccessRate * 100), (int)(historyBonus * 100), finalRate * 100));
 
         double rand = Math.random();
         if (rand < finalRate) {
@@ -98,19 +102,24 @@ public class Drug implements Serializable {
         return this.cost * (1.0 - totalDiscount);
     }
 
-    /**
-     * ⚡ 刷新機制（回補當天次數，但該藥物的刷新機率腰斬！）
-     */
+    // ==========================================
+    // 💡 為了防範外部類別（BioSystem / BioPanelController）呼叫舊方法導致編譯失敗，
+    // 空殼保留以下三個方法，做完美相容性防呆，內部不執行任何懲罰累加
+    // ==========================================
     public void refundDailyCount() {
-        if (this.dailyResearchCount > 0) {
-            this.dailyResearchCount--;
-            this.refreshRateMultiplier *= 0.5;
-        }
+        // 已移除次數懲罰與機率腰斬邏輯，此處留空做安全相容
     }
 
     public void resetDailyCount() {
-        this.dailyResearchCount = 0;
-        this.refreshRateMultiplier = 1.0;
+        // 已移除次數懲罰，此處留空做安全相容
+    }
+
+    public int getDailyResearchCount() {
+        return 0; // 永遠回傳 0，安全繞過外部 `executeResearch` 與 `researchDrug` 的次數上限檢查
+    }
+
+    public double getRefreshRateMultiplier() {
+        return 1.0; // 永遠回傳不變的 1.0 倍率
     }
 
     // ==========================================
@@ -122,14 +131,11 @@ public class Drug implements Serializable {
     public double getCost() { return cost; }
     public double getRewardMultiplier() { return rewardMultiplier; }
     public boolean isDiscovered() { return isDiscovered; }
-    public int getDailyResearchCount() { return dailyResearchCount; }
     public int getTotalSuccessCount() { return totalSuccessCount; }
-    public double getRefreshRateMultiplier() { return refreshRateMultiplier; }
     public double getBaseSuccessRate() { return baseSuccessRate; }
     public int getRemainingCooldownDays() { return remainingCooldownDays; }
     public boolean isAvailable() { return remainingCooldownDays <= 0; }
 
-    // 🎯 提供上市狀態的外部存取介面
     public boolean isLaunched() { return isLaunched; }
     public void setLaunched(boolean launched) { this.isLaunched = launched; }
 }

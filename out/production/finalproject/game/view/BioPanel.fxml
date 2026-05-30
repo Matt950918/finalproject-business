@@ -35,7 +35,7 @@
 
                     <VBox spacing="12" style="-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);">
                         <HBox alignment="CENTER_LEFT">
-                            <Label text="💉 廣效型流感疫苗 (Preventive)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+                            <Label fx:id="lblTitlePreventive" text="💉 預防類藥物 (Preventive)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
                             <Region HBox.hgrow="ALWAYS" />
                             <Label fx:id="lblCostPreventive" text="研發成本: $100 萬" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
                         </HBox>
@@ -48,7 +48,7 @@
 
                     <VBox spacing="12" style="-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);">
                         <HBox alignment="CENTER_LEFT">
-                            <Label text="💊 高效速效感冒膠囊 (Cold)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+                            <Label fx:id="lblTitleCold" text="💊 感冒類藥物 (Cold)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
                             <Region HBox.hgrow="ALWAYS" />
                             <Label fx:id="lblCostCold" text="研發成本: $50 萬" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
                         </HBox>
@@ -61,7 +61,7 @@
 
                     <VBox spacing="12" style="-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);">
                         <HBox alignment="CENTER_LEFT">
-                            <Label text="🧬 次世代抗癌特效藥 (Special)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+                            <Label fx:id="lblTitleSpecial" text="🧬 特效標靶類藥物 (Special)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
                             <Region HBox.hgrow="ALWAYS" />
                             <Label fx:id="lblCostSpecial" text="研發成本: $500 萬" style="-fx-background-color: #e3d8f9; -fx-text-fill: #333333; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
                         </HBox>
@@ -74,7 +74,7 @@
 
                     <VBox spacing="12" style="-fx-background-color: #fcebe9; -fx-background-radius: 12; -fx-padding: 18; -fx-border-color: #f5b7b1; -fx-border-width: 1; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);">
                         <HBox alignment="CENTER_LEFT">
-                            <Label text="💀 【管制】精神活性毒品 (Narcotic)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #c0392b;" />
+                            <Label fx:id="lblTitleNarcotic" text="💀 管制類藥物 (Narcotic)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #c0392b;" />
                             <Region HBox.hgrow="ALWAYS" />
                             <Label fx:id="lblCostNarcotic" text="研發成本: $1500 萬" style="-fx-background-color: #f9d5d2; -fx-text-fill: #922b21; -fx-padding: 4 10; -fx-background-radius: 10; -fx-font-size: 13px; -fx-font-weight: bold;" />
                         </HBox>

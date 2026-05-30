@@ -13,9 +13,7 @@ public class StockMarketSystem {
 
     private Company company;
     private MarketService marketService;
-
     private List<StockRecord> history = new ArrayList<>();
-
     private int time = 0;
 
     public StockMarketSystem(Company company) {
@@ -23,32 +21,29 @@ public class StockMarketSystem {
         this.marketService = new MarketService();
     }
 
-    // 一回合（核心模擬）
+    // 🎯 核心重構：統一由入口更新股價，此處僅做歷史追蹤與聲譽同步
     public void nextTurn() {
-        double price = StockService.calculateBasePrice(company);
-        MarketEvent event = marketService.getRandomEvent();
-        price = StockService.applyMarketEvent(price, event);
-        price = StockService.applyVolatility(price);
+        // 1. 直接同步玩家公司在 MainGameController 已經計算完成的最新股價
+        double currentPrice = company.getStockPrice();
 
-        history.add(new StockRecord(time++, price));
+        // 2. 將這筆乾淨的資料同步進 StockMarketSystem 的歷史紀錄
+        history.add(new StockRecord(time++, currentPrice));
 
-        // 💡 徹底重構：改成正確、正規的 getPriceChange()，不將就他原本的髒命名！
-        if (event.getPriceChange() > 1) {
-            company.addReputation(2);
-        } else {
-            company.addReputation(-2);
+        // 3. 根據當前股價與初始股價(10元)的相對表現，調整公司聲譽
+        if (currentPrice > 10.0) {
+            company.addReputation(1); // 股價高於發行價，微幅增加商譽
+        } else if (currentPrice < 10.0) {
+            company.addReputation(-1); // 跌破發行價，商譽受損
         }
-
-        // 👍 乾乾淨淨：裡面完全沒有任何會偷偷自動扣減公司 cash 現金的大便 Bug 程式碼！
     }
 
     public List<StockRecord> getHistory() {
-        return history;
+        // 為了防止圖表抓錯，直接與 Company 的歷史紀錄保持絕對同步
+        return company.getStockHistory();
     }
 
     public double getLatestPrice() {
-        if (history.isEmpty()) return 0;
-        return history.get(history.size() - 1).getPrice();
+        return company.getStockPrice();
     }
 
     public Company getCompany() {
