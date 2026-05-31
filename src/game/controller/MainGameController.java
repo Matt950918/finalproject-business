@@ -357,9 +357,9 @@ public class MainGameController {
             double income = techSystem.getMoney() - beforeMoney;
 
             if (income > 0) {
-                playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 💰 收到供應鏈合約清算淨利潤：+$" + formatMoney(income));
+                playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 💰 收到供應鏈合約清算利潤：+$" + formatMoney(income));
             } else if (income < 0) {
-                playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 📉 支付供應鏈合約與維護淨虧損：-$" + formatMoney(Math.abs(income)));
+                playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 📉 支付供應鏈合約每期費用：-$" + formatMoney(Math.abs(income)));
             }
             playerCompany.setCash(techSystem.getMoney());
             loadTechPanel();
@@ -503,6 +503,14 @@ public class MainGameController {
         timeline.stop();
         double oldPrice = playerCompany.getStockPrice();
         MarketEvent resultEvent = (selectedOption != null) ? selectedOption.execute(playerCompany) : null;
+
+        // 🔥 攔截火災破產觸發：資金不足以應對火災時，直接啟動破產機制
+        if (resultEvent != null && "__TRIGGER_BANKRUPTCY__".equals(resultEvent.getName())) {
+            System.out.println("🚨 偵測到火災破產標記，立即啟動破產流程！");
+            saveCurrentProgress();
+            checkBankruptcy();
+            return;
+        }
 
         if (resultEvent != null && resultEvent.getName() != null && resultEvent.getName().contains("火災停業")) {
             if (techSystem != null) {

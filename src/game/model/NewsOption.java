@@ -24,7 +24,9 @@ public class NewsOption {
         // 1. 檢查並扣款
         if (cost > 0) {
             if (!company.spendCash(cost)) {
-                return new MarketEvent("資金不足，無法應對", 0.85); // 沒錢硬選的懲罰：股價跌
+                // 🔥 只要選了需要花費的選項卻資金不足，一律觸發破產流程
+                System.out.println("🚨 選項花費不足（需要 $" + cost + "），觸發破產檢查！");
+                return new MarketEvent("__TRIGGER_BANKRUPTCY__", 0.5);
             }
         }
 
@@ -44,7 +46,11 @@ public class NewsOption {
         // 🆕 【不透過 PlayerData 的連動】：
         // 如果結果名字是「火災停業」，代表現在是科技業公司，直接叫他扣下停業 3 天的天數！
         if (resultEvent != null && "火災停業".equals(resultEvent.getName())) {
-            // 直接對傳進來的 company 物件呼叫（稍後我們在 TechSystem 的換日上做防呆）
+            // 🔥 進一步檢查：火災發生後，若公司已沒錢負擔損失，也觸發破產
+            if (company.getCash() <= 0) {
+                System.out.println("🚨 火災發生且公司資金歸零，觸發破產檢查！");
+                return new MarketEvent("__TRIGGER_BANKRUPTCY__", 0.5);
+            }
             System.out.println("🚨 偵測到火災新聞，觸發事件通知。");
         }
 
