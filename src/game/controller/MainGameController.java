@@ -28,6 +28,7 @@ public class MainGameController {
 
     @FXML private Button btnGacha;
     @FXML private Button btnRanking;
+    @FXML private Button btnEndDay;   // 🆕 新增：用於 51 天後 / 破產時隱藏「結束本日營業」按鈕
 
     @FXML private Circle gachaBadge;
 
@@ -42,9 +43,6 @@ public class MainGameController {
     @FXML private Label lblNewsTitle;
     @FXML private VBox optionsBox;
     @FXML private StackPane industryContentArea;
-
-    @FXML private Button btnEndDay; // 給 Bug 3 用的
-    private List<bank_LoanRequest> currentBankRequests = null; // 給 Bug 1 用的：暫存今日銀行客人
 
     // 🎲 全新機會命運狀態機變數
     private boolean gachaUsedYesterday = false;
@@ -231,7 +229,7 @@ public class MainGameController {
         // 🌅 進入新的一天，重置日終結算旗標
         this.isEndOfDaySettlement = false;
 
-        if (this.currentDay > 50) {
+        if (this.currentDay >= 51) {
             if (timeline != null) {
                 timeline.stop();
             }
@@ -287,6 +285,12 @@ public class MainGameController {
                 handleLoadRanking(null);
                 updateStatusLabels();
 
+                // ✅ 51天後隱藏「結束本日營業」按鈕
+                if (btnEndDay != null) {
+                    btnEndDay.setVisible(false);
+                    btnEndDay.setDisable(true);
+                }
+
                 if (industryContentArea != null) {
                     for (javafx.scene.Node node : industryContentArea.lookupAll(".button")) {
                         if (node instanceof javafx.scene.control.Button) {
@@ -330,8 +334,6 @@ public class MainGameController {
                 playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 💰 收到放款本息：+$" + formatMoney(income));
             }
             bankSystem.setMoney(playerCompany.getCash());
-            currentBankRequests = new ArrayList<>();
-            currentBankRequests.add(bank_Customer.createRandomRequest());
             loadBankPanel();
 
             if (!bankReports.isEmpty()) {
@@ -387,11 +389,9 @@ public class MainGameController {
             this.currentTechController = null;
 
             bankController.initData(bankSystem, this);
-            if (currentBankRequests == null) {
-                currentBankRequests = new ArrayList<>();
-                currentBankRequests.add(bank_Customer.createRandomRequest());
-            }
-            bankController.loadRequests(currentBankRequests);
+            List<bank_LoanRequest> todayRequests = new ArrayList<>();
+            todayRequests.add(bank_Customer.createRandomRequest());
+            bankController.loadRequests(todayRequests);
 
             industryContentArea.getChildren().clear();
             industryContentArea.getChildren().add(bankPanel);
@@ -690,11 +690,6 @@ public class MainGameController {
         if (mainGameLayer != null) mainGameLayer.setDisable(false);
         if (industryContentArea != null) industryContentArea.setDisable(false);
 
-        if (btnEndDay != null) {
-            btnEndDay.setDisable(true);
-            btnEndDay.setVisible(false);
-        }
-
         saveCurrentProgress();
 
         javafx.application.Platform.runLater(() -> {
@@ -727,6 +722,13 @@ public class MainGameController {
             // 導向排行榜並停用返回按鈕
             handleLoadRanking(null);
             updateStatusLabels();
+
+            // ✅ 破產 Game Over 後隱藏「結束本日營業」按鈕
+            if (btnEndDay != null) {
+                btnEndDay.setVisible(false);
+                btnEndDay.setDisable(true);
+            }
+
             if (industryContentArea != null) {
                 for (javafx.scene.Node node : industryContentArea.lookupAll(".button")) {
                     if (node instanceof javafx.scene.control.Button) {
