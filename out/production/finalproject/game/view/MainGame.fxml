@@ -28,7 +28,7 @@
                     style="-fx-background-color: transparent; -fx-text-fill: #1A7A5E; -fx-font-size: 17px; -fx-cursor: hand; -fx-padding: 0; -fx-font-weight: bold;"
                     maxWidth="Infinity" HBox.hgrow="ALWAYS" />
             <Region HBox.hgrow="ALWAYS" />
-            <Button text="結束本日營業 ➔" onAction="#handleEndDay"
+            <Button fx:id="btnEndDay" text="結束本日營業 ➔" onAction="#handleEndDay"
                     styleClass="btn-success"
                     style="-fx-font-size: 15px; -fx-padding: 9 20;" />
         </HBox>

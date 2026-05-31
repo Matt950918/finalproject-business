@@ -17,6 +17,7 @@ public class BankPanelController {
     @FXML private Label lblBankTitle;
     @FXML private Label lblLoanCount;
     @FXML private VBox loanListContainer;
+    private List<bank_LoanRequest> currentRequests; // 暫存名單參照
 
     private bank_system bankSystem;
     private MainGameController mainController;
@@ -38,6 +39,7 @@ public class BankPanelController {
     }
 
     public void loadRequests(List<bank_LoanRequest> requests) {
+        this.currentRequests = requests; // 新增這行
         loanListContainer.getChildren().clear();
         lblLoanCount.setText("待審核案件：" + requests.size() + " 件");
 
@@ -126,6 +128,7 @@ public class BankPanelController {
 
         // 4. 精準記帳：將這筆明確的扣款記錄在流水帳中
         mainController.getPlayerCompany().recordTransaction("↳ 🏦 [放貸核准] 核發貸款給 " + req.getApplicantName() + "：-$" + mainController.formatMoney(req.getAmount()));
+        if (currentRequests != null) currentRequests.remove(req);
 
         // 5. 強制重刷主畫面頂部按鈕狀態（此時畫面的資金會立刻「啪」的一聲現扣）
         mainController.updateStatusLabels();
@@ -137,6 +140,13 @@ public class BankPanelController {
 
     private void handleReject(bank_LoanRequest req, VBox card) {
         bank_LoanRequest newReq = req.processRejection();
+        if (currentRequests != null) {
+            int idx = currentRequests.indexOf(req);
+            currentRequests.remove(req);
+            if (newReq != null && idx >= 0) {
+                currentRequests.add(idx, newReq);
+            }
+        }
 
         int index = loanListContainer.getChildren().indexOf(card);
         loanListContainer.getChildren().remove(card);

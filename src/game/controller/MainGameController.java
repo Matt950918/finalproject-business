@@ -43,6 +43,9 @@ public class MainGameController {
     @FXML private VBox optionsBox;
     @FXML private StackPane industryContentArea;
 
+    @FXML private Button btnEndDay; // 給 Bug 3 用的
+    private List<bank_LoanRequest> currentBankRequests = null; // 給 Bug 1 用的：暫存今日銀行客人
+
     // 🎲 全新機會命運狀態機變數
     private boolean gachaUsedYesterday = false;
     private boolean gachaAvailableToday = false;
@@ -155,13 +158,21 @@ public class MainGameController {
         PlayerData sessionData = MainMenuController.activeProgress;
 
         if (sessionData != null && sessionData.getCompany() != null && sessionData.getDay() > 0) {
-            System.out.println("📂 [進度載入] 成功載入 Slot [" + slotIndex + "] 歷史存檔，產業: " + sessionData.getCompany().getIndustry());
+            System.out.println("📂 [進度載入] 成功載入 Slot [" + slotIndex + "] 歷史存檔...");
             this.playerCompany = sessionData.getCompany();
             this.currentDay = sessionData.getDay() - 1;
 
-            if (playerCompany.getIndustry() == IndustryType.BANK) bankSystem.setMoney(playerCompany.getCash());
+            if (playerCompany.getIndustry() == IndustryType.BANK) {
+                bankSystem.setMoney(playerCompany.getCash());
+
+                // 💡 關鍵修復：不管是哪個時空背景的存檔，只要是銀行產業，
+                // 讀檔進來的第一件事，就是強迫 bank_Customer 去把 57 人名單載入記憶體！
+                // 這樣等一下 loadBankPanel 抽卡時，csvList 就絕對不會是空的！
+                bank_Customer.createRandomRequest();
+            }
             else if (playerCompany.getIndustry() == IndustryType.BIOTECH) bioSystem.setMoney(playerCompany.getCash());
             else if (playerCompany.getIndustry() == IndustryType.TECH) techSystem.setMoney(playerCompany.getCash());
+
         } else {
             System.out.println("🏢 [進度建立] Slot [" + slotIndex + "] 為新局，新創產業: " + selectedIndustry);
             playerCompany = new Company(customName, selectedIndustry);
@@ -319,6 +330,8 @@ public class MainGameController {
                 playerCompany.recordTransaction("↳ [第 " + currentDay + " 天] 💰 收到放款本息：+$" + formatMoney(income));
             }
             bankSystem.setMoney(playerCompany.getCash());
+            currentBankRequests = new ArrayList<>();
+            currentBankRequests.add(bank_Customer.createRandomRequest());
             loadBankPanel();
 
             if (!bankReports.isEmpty()) {
@@ -374,9 +387,11 @@ public class MainGameController {
             this.currentTechController = null;
 
             bankController.initData(bankSystem, this);
-            List<bank_LoanRequest> todayRequests = new ArrayList<>();
-            todayRequests.add(bank_Customer.createRandomRequest());
-            bankController.loadRequests(todayRequests);
+            if (currentBankRequests == null) {
+                currentBankRequests = new ArrayList<>();
+                currentBankRequests.add(bank_Customer.createRandomRequest());
+            }
+            bankController.loadRequests(currentBankRequests);
 
             industryContentArea.getChildren().clear();
             industryContentArea.getChildren().add(bankPanel);
@@ -674,6 +689,11 @@ public class MainGameController {
         if (newsOverlay != null) newsOverlay.setVisible(false);
         if (mainGameLayer != null) mainGameLayer.setDisable(false);
         if (industryContentArea != null) industryContentArea.setDisable(false);
+
+        if (btnEndDay != null) {
+            btnEndDay.setDisable(true);
+            btnEndDay.setVisible(false);
+        }
 
         saveCurrentProgress();
 

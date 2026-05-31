@@ -305,6 +305,25 @@ public class TechPanelController {
                 loadPartnerUI();
                 return;
             }
+            double upfrontCost = (contract.getRevenue() == 0) ? contract.getCost() : 0;
+            if (mainController.getPlayerCompany().getCash() < upfrontCost) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("資金不足");
+                    alert.setHeaderText(null);
+                    alert.setContentText("公司可用資金不足，無法支付首期建置費 $" + mainController.formatMoney(upfrontCost) + "！");
+                    alert.showAndWait();
+                });
+                return;
+            }
+
+            if (upfrontCost > 0) {
+                mainController.getPlayerCompany().spendCash(upfrontCost);
+                techSystem.setMoney(mainController.getPlayerCompany().getCash());
+                mainController.getPlayerCompany().recordTransaction(
+                        "↳ [第 " + mainController.getCurrentDay() + " 天] 支付供應鏈首期建置費 - " + contract.getPartnerName() + "：-$" + mainController.formatMoney(upfrontCost)
+                );
+            }
             techSystem.signContract(contract);
             mainController.getPlayerCompany().recordTransaction(
                     "↳ [第 " + mainController.getCurrentDay() + " 天] 簽署供應鏈合約 - " + contract.getPartnerName()

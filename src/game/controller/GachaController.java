@@ -120,54 +120,51 @@ public class GachaController {
         Company company = mainController.getPlayerCompany();
         if (company == null) return;
 
-        // 💡 判斷當前是否處於「破產逆天改命」的特殊狀態
-        boolean isBankruptcyDraw = (company.getCash() <= 0 && company.isHasBankrupted());
+        // 🎯 修正：只要資金小於等於 0，就直接視為破產抽卡，不再死板等待日終結算的標記！
+        boolean isBankruptcyDraw = (company.getCash() <= 0);
 
         if (!isBankruptcyDraw) {
-            // 常規狀態：檢查今日是否可抽、是否這回合已抽、金額是否足夠
+            // 正常抽卡邏輯
             if (!mainController.isGachaAvailableToday() || hasDrawnThisTurn) return;
             if (company.getCash() < 1000000) return;
         } else {
-            // 破產狀態：防連點
+            // 破產免費抽卡邏輯
             if (hasDrawnThisTurn) return;
+            company.setHasBankrupted(true); // 🎯 關鍵：只要抽了，就正式標記為已使用免死金牌，防止玩家無限白嫖
         }
 
-        // 🔒 按下瞬間立刻鎖死按鈕，防連點
         btnGachaAction.setDisable(true);
-        this.hasDrawnThisTurn = true; // 標記當下這回合已經抽取
+        this.hasDrawnThisTurn = true;
 
-        // 1. 金額扣除與帳目紀錄
+        // 1. 扣款邏輯與紀錄
         if (!isBankruptcyDraw) {
-            // 常規狀態：實質扣除 100 萬現金
             company.setCash(company.getCash() - 1000000);
             mainController.syncCashToAllIndustries();
-            company.recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 🎲 繳納機會命運手續費：-$100.00 萬");
+            company.recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 🎲 購買機會命運機會：-$100.00 萬");
         } else {
-            // 破產狀態：不扣錢，改為同步當前慘澹的財政，並紀錄逆天改命事件
             mainController.syncCashToAllIndustries();
-            company.recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] ⚠️ 觸發破產逆襲機制：【機會命運】孤注一擲！(免費)");
+            company.recordTransaction("↳ [第 " + mainController.getCurrentDay() + " 天] 🚨 觸發破產特別機制 (免費抽卡)");
         }
 
-        // 🌀 拉霸高速滾動動態字串
+        // 跑馬燈假字串
         String[] fakeRouletteTexts;
         if (!isBankruptcyDraw) {
             fakeRouletteTexts = new String[]{
-                    "⚡ 正在對接華爾街核心創投群...",
-                    "🧬 正在解密新型病毒基因核心...",
-                    "💻 正在遠端破解矽谷防火牆...",
-                    "📊 正在操縱市場大數據即時情緒...",
-                    "🚀 正在秘密對接巨頭級晶圓供應鏈...",
-                    "🏦 正在暗中清查海外匿名隱藏帳戶..."
+                    "市場資金流動中...",
+                    "正在聯絡投資人...",
+                    "探聽內部消息中...",
+                    "尋找潛在商機...",
+                    "分析產業趨勢...",
+                    "與政商名流交涉中..."
             };
         } else {
-            // 破產專屬的悲壯感跑馬燈
             fakeRouletteTexts = new String[]{
-                    "🔥 正在變賣創辦人最後的法拉利...",
-                    "📡 正在向地下錢莊發出靈魂求助...",
-                    "🏛️ 正在死守法院傳票的最後防線...",
-                    "📊 正在將公司最後的希望注入命運指針...",
-                    "🚨 正在與破產清算小組進行極速賽跑...",
-                    "💫 正在點燃公司僅存的星星之火..."
+                    "尋找最後的救命稻草...",
+                    "變賣公司剩餘資產...",
+                    "求見神秘富豪...",
+                    "嘗試逆轉乾坤...",
+                    "孤注一擲...",
+                    "命運的齒輪開始轉動..."
             };
         }
 
@@ -185,16 +182,15 @@ public class GachaController {
         KeyFrame keyFrame = new KeyFrame(Duration.seconds(0.04), e -> {
             String fakeMsg = fakeRouletteTexts[random.nextInt(fakeRouletteTexts.length)];
             if (lblResultDisplay != null) {
-                String prefix = isBankruptcyDraw ? "🚨 逆天改命生死一搏 ➔ " : "🌀 命運之輪高速運轉中 ➔ ";
+                String prefix = isBankruptcyDraw ? "🚨 " : "🎲 ";
                 lblResultDisplay.setText(prefix + fakeMsg);
             }
         });
-        rouletteTimeline.getKeyFrames().add(keyFrame);
 
+        rouletteTimeline.getKeyFrames().add(keyFrame);
         rouletteTimeline.setOnFinished(e -> {
             executeActualGachaLogic(company);
         });
-
         rouletteTimeline.play();
     }
 
@@ -204,18 +200,18 @@ public class GachaController {
         }
         if (eventPool.isEmpty()) {
             if (lblResultDisplay != null) {
-                lblResultDisplay.setText("❌ 錯誤：無法載入機會命運事件池，請檢查後台數據。");
+                lblResultDisplay.setText("讀取事件失敗。");
             }
             return;
         }
 
-        // 2. 隨機抽選機會命運事件
+        // 2. 隨機抽出一個事件
         GachaEvent pulledEvent = eventPool.get(random.nextInt(eventPool.size()));
 
-        // 💡 判斷這次抽取是不是「破產逆天改命」觸發的
-        boolean isBankruptcyDraw = (company.getCash() <= 0 && company.isHasBankrupted());
+        // 🎯 修正：同樣移除 isHasBankrupted() 的嚴格判斷，以資金為主
+        boolean isBankruptcyDraw = (company.getCash() <= 0);
 
-        // 3. 實質結算後續的現金與股價獎懲
+        // 3. 結算事件對資金與股價的影響
         company.setCash(company.getCash() + pulledEvent.cashImpact);
         mainController.syncCashToAllIndustries();
 
